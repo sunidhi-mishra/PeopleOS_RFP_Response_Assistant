@@ -1,0 +1,272 @@
+[
+  {
+    "id": "KB001",
+    "category": "Security & Compliance",
+    "question": "Does PeopleOS hold SOC 2 Type II certification?",
+    "answer": "Yes. PeopleOS achieved SOC 2 Type II certification in March 2022, covering Security, Availability, and Confidentiality trust service criteria. Our most recent audit was completed in February 2024 by Prescient Assurance. The full report is available under NDA upon request.",
+    "last_updated": "2025-11-14",
+    "review_due": "2026-05-15",
+    "owner": "Security Team"
+  },
+  {
+    "id": "KB002",
+    "category": "Security & Compliance",
+    "question": "Is PeopleOS GDPR compliant and where is data stored?",
+    "answer": "Yes. PeopleOS is fully GDPR compliant, acting as a Data Processor. We maintain a robust Data Processing Addendum (DPA) and support Data Subject Access Requests (DSARs) within 72 hours. All EU customer data is stored in Frankfurt, Germany in the AWS eu-central-1 region.",
+    "last_updated": "2025-10-10",
+    "review_due": "2026-04-10",
+    "owner": "Legal & Compliance"
+  },
+  {
+    "id": "KB003",
+    "category": "Security & Compliance",
+    "question": "What encryption standards are used for data at rest and in transit?",
+    "answer": "PeopleOS encrypts data using AES-256 at rest and TLS 1.2 or higher in transit. Encryption keys are managed using AWS Key Management Service (KMS) with quarterly key rotation policies.",
+    "last_updated": "2025-09-19",
+    "review_due": "2026-03-20",
+    "owner": "Security Team"
+  },
+  {
+    "id": "KB004",
+    "category": "Security & Compliance",
+    "question": "Does PeopleOS support Single Sign-On (SSO)?",
+    "answer": "Yes. PeopleOS supports Single Sign-On (SSO) using SAML 2.0 and OAuth 2.0. We provide pre-built integrations with major identity providers including Okta, Azure AD, Google Workspace, and OneLogin. Custom SAML setup is available at no extra cost.",
+    "last_updated": "2025-08-03",
+    "review_due": "2026-02-01",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB005",
+    "category": "Security & Compliance",
+    "question": "What is the penetration testing policy for PeopleOS?",
+    "answer": "PeopleOS undergoes annual third-party penetration testing performed by Bishop Fox. Customers are permitted to conduct their own penetration testing on our environments with 10 business days' notice and a signed testing agreement.",
+    "last_updated": "2025-07-27",
+    "review_due": "2026-01-25",
+    "owner": "Security Team"
+  },
+  {
+    "id": "KB006",
+    "category": "Security & Compliance",
+    "question": "Is PeopleOS CCPA compliant?",
+    "answer": "Yes. PeopleOS is fully compliant with the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA). We support consumer rights requests and do not sell customer personal data.",
+    "last_updated": "2025-06-06",
+    "review_due": "2025-12-05",
+    "owner": "Legal & Compliance"
+  },
+  {
+    "id": "KB007",
+    "category": "Integrations & APIs",
+    "question": "What payroll systems does PeopleOS integrate with?",
+    "answer": "We offer native integrations with ADP Workforce Now, Gusto, Paychex Flex, and Rippling. These integrations support bi-directional data synchronization with a configurable schedule, defaulting to every 4 hours.",
+    "last_updated": "2025-11-19",
+    "review_due": "2026-05-20",
+    "owner": "Partnerships"
+  },
+  {
+    "id": "KB008",
+    "category": "Integrations & APIs",
+    "question": "Does PeopleOS have an open API?",
+    "answer": "Yes. PeopleOS provides a REST API with OpenAPI 3.0 specifications for customers on our Enterprise plan. The API is rate-limited to 1,000 requests per minute per tenant and provides webhooks for 22 event types.",
+    "last_updated": "2025-10-10",
+    "review_due": "2026-04-10",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB009",
+    "category": "Integrations & APIs",
+    "question": "Do you integrate with Slack or Microsoft Teams?",
+    "answer": "Yes. PeopleOS offers native integrations for both Slack and Microsoft Teams. The Slack integration is available on both Professional and Enterprise plans, while the Microsoft Teams integration is available on the Enterprise plan only.",
+    "last_updated": "2025-09-14",
+    "review_due": "2026-03-15",
+    "owner": "Product"
+  },
+  {
+    "id": "KB010",
+    "category": "Integrations & APIs",
+    "question": "Do you integrate with Workday or SAP SuccessFactors?",
+    "answer": "Yes. Workday and SAP SuccessFactors are supported via our enterprise integration layer using SFTP and REST connectors. Setup requires a mandatory 2-week technical discovery phase with our integrations team.",
+    "last_updated": "2025-08-30",
+    "review_due": "2026-02-28",
+    "owner": "Solutions Engineering"
+  },
+  {
+    "id": "KB011",
+    "category": "Integrations & APIs",
+    "question": "What bulk data import formats does the platform support?",
+    "answer": "PeopleOS supports bulk data imports via CSV, XLSX, and JSON file formats. We offer pre-formatted spreadsheet templates in the admin dashboard and provide row-level error reporting during imports.",
+    "last_updated": "2025-07-17",
+    "review_due": "2026-01-15",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB012",
+    "category": "Implementation & Onboarding",
+    "question": "What is the implementation timeline for enterprise clients?",
+    "answer": "The enterprise implementation timeline ranges between 10 to 14 weeks for clients with 1,000 to 10,000 employees. This time is structured into discovery, data migration, integration, User Acceptance Testing (UAT), and go-live phases.",
+    "last_updated": "2025-06-02",
+    "review_due": "2025-12-01",
+    "owner": "Customer Success"
+  },
+  {
+    "id": "KB013",
+    "category": "Implementation & Onboarding",
+    "question": "Do we get dedicated support during implementation?",
+    "answer": "Yes. Enterprise plan clients receive a dedicated Implementation Manager and a dedicated Solutions Engineer. Professional plan clients receive pooled onboarding support and are assigned a named Customer Success Manager (CSM).",
+    "last_updated": "2026-01-19",
+    "review_due": "2026-07-20",
+    "owner": "Customer Success"
+  },
+  {
+    "id": "KB014",
+    "category": "Implementation & Onboarding",
+    "question": "What training resources does PeopleOS provide?",
+    "answer": "We provide PeopleOS Academy containing over 40 role-based training modules, bi-weekly live webinars, and custom training sessions for Enterprise clients. Content is available in English, Spanish, and French.",
+    "last_updated": "2026-02-09",
+    "review_due": "2026-08-10",
+    "owner": "Customer Success"
+  },
+  {
+    "id": "KB015",
+    "category": "Implementation & Onboarding",
+    "question": "How does the data migration process work?",
+    "answer": "Data migration follows a four-phase workflow: audit and cleansing, template-based extraction, sandbox validation, and production migration with rollback capability. We have extensive experience migrating data from BambooHR, Zenefits, ADP, and Oracle HCM.",
+    "last_updated": "2026-03-07",
+    "review_due": "2026-09-05",
+    "owner": "Solutions Engineering"
+  },
+  {
+    "id": "KB016",
+    "category": "Implementation & Onboarding",
+    "question": "Does PeopleOS support a phased rollout plan?",
+    "answer": "Yes. We support phased rollouts organized by business unit, geography, or employee group. We configure parallel pilot and production environments, and we recommend this approach for organizations with 2,500 or more employees.",
+    "last_updated": "2026-04-21",
+    "review_due": "2026-10-20",
+    "owner": "Customer Success"
+  },
+  {
+    "id": "KB017",
+    "category": "Pricing & Licensing",
+    "question": "What is the pricing model for PeopleOS?",
+    "answer": "PeopleOS uses a per-seat, per-month subscription model. The Starter tier is $8/seat (up to 200 employees), Professional is $14/seat (up to 1,000 employees), and Enterprise is custom-priced. Annual commitments receive a 15% discount. Additional modules are priced separately.",
+    "last_updated": "2026-05-03",
+    "review_due": "2026-11-01",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB018",
+    "category": "Pricing & Licensing",
+    "question": "Are there implementation or setup fees?",
+    "answer": "Yes. The Professional plan has a one-time setup and implementation fee ranging from $3,500 to $7,500. Enterprise implementation fees are custom-scoped via a Statement of Work (SOW). There are no hidden fees.",
+    "last_updated": "2026-06-11",
+    "review_due": "2026-12-10",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB019",
+    "category": "Pricing & Licensing",
+    "question": "Do you offer a free trial or pilot program?",
+    "answer": "Yes. We offer a 14-day sandbox free trial for Professional plan prospects. For Enterprise accounts, we support paid pilot programs (typically 60 to 90 days) with the pilot cost credited toward the first-year contract upon signing.",
+    "last_updated": "2026-01-04",
+    "review_due": "2026-07-05",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB020",
+    "category": "Pricing & Licensing",
+    "question": "What is the minimum contract length?",
+    "answer": "The minimum contract length for PeopleOS is 12 months. We offer a 5% discount on 2-year contracts and a 10% discount on 3-year contracts. Monthly billing options are not available for the Enterprise plan.",
+    "last_updated": "2026-01-31",
+    "review_due": "2026-08-01",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB021",
+    "category": "SLAs & Support",
+    "question": "What is your service uptime SLA?",
+    "answer": "We guarantee a 99.9% monthly uptime, which permits less than 44 minutes of unplanned downtime per month. SLA breach credits are applied automatically to customer invoices. Our average trailing 12-month uptime is 99.97%.",
+    "last_updated": "2026-03-12",
+    "review_due": "2026-09-10",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB022",
+    "category": "SLAs & Support",
+    "question": "What customer support tiers do you offer?",
+    "answer": "We offer three support tiers: Standard (email support, 24-hour response, 9 AM - 6 PM CT), Priority (email, phone, and chat support with 4-hour response for P1 issues, available 24/7), and Dedicated (named engineer, 1-hour P1 response, and quarterly review sessions).",
+    "last_updated": "2026-04-16",
+    "review_due": "2026-10-15",
+    "owner": "Customer Success"
+  },
+  {
+    "id": "KB023",
+    "category": "SLAs & Support",
+    "question": "What is the critical incident response process?",
+    "answer": "We support four incident severity levels from P1 to P4. For P1 critical incidents, an Incident Commander is assigned within 15 minutes, initial customer communications go out within 30 minutes, the public status page is updated in real time, and a post-incident report (PIR) is provided within 5 business days. Average P1 resolution time is 47 minutes.",
+    "last_updated": "2026-05-10",
+    "review_due": "2026-11-08",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB024",
+    "category": "SLAs & Support",
+    "question": "Do you have a disaster recovery plan?",
+    "answer": "Yes. We maintain a documented Business Continuity and Disaster Recovery (BCDR) plan tested semi-annually. Our RTO is 4 hours, and our RPO is 1 hour, supported by real-time replication to a secondary AWS region.",
+    "last_updated": "2026-06-29",
+    "review_due": "2026-12-28",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB025",
+    "category": "SLAs & Support",
+    "question": "How often are database backups performed?",
+    "answer": "Database backups are performed automatically every 6 hours and are encrypted at rest. Backup retention is 30 days for Professional and 90 days for Enterprise customers. Restore integrity testing is conducted monthly, and point-in-time recovery up to 30 days is available for Enterprise.",
+    "last_updated": "2026-01-14",
+    "review_due": "2026-07-15",
+    "owner": "Engineering"
+  },
+  {
+    "id": "KB026",
+    "category": "Customer References & Case Studies",
+    "question": "Can you provide retail customer references?",
+    "answer": "Yes. We support 14 enterprise retail customers, including two Fortune 500 retail companies. We can arrange up to three reference calls under NDA, coordinated through your Account Executive within 10 business days.",
+    "last_updated": "2026-02-27",
+    "review_due": "2026-08-28",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB027",
+    "category": "Customer References & Case Studies",
+    "question": "Do you have case studies or references in the healthcare industry?",
+    "answer": "Yes. We support 22 healthcare clients. A HIPAA-compliant Business Associate Agreement (BAA) is available. We have deep experience managing credentialing data and shift-based workforces. A case study is available for our 3,200-employee regional healthcare client.",
+    "last_updated": "2026-03-20",
+    "review_due": "2026-09-18",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB028",
+    "category": "Customer References & Case Studies",
+    "question": "What measurable business outcomes do PeopleOS customers achieve?",
+    "answer": "Customers achieve a 40% reduction in HR administration workload, a 28% improvement in new-hire time-to-productivity, a 60% reduction in payroll processing errors, and a 35% increase in employee self-service portal adoption within 90 days.",
+    "last_updated": "2026-04-02",
+    "review_due": "2026-10-01",
+    "owner": "Marketing"
+  },
+  {
+    "id": "KB029",
+    "category": "Customer References & Case Studies",
+    "question": "What is the total number of clients and average customer size?",
+    "answer": "As of Q1 2024, PeopleOS has 183 active enterprise customers, with an average customer size of 1,200 employees (largest client is 8,400 employees). We maintain a 94% customer retention rate and 112% Net Revenue Retention (NRR).",
+    "last_updated": "2026-05-17",
+    "review_due": "2026-11-15",
+    "owner": "Sales"
+  },
+  {
+    "id": "KB030",
+    "category": "Customer References & Case Studies",
+    "question": "Are there public case studies or customer reviews available?",
+    "answer": "Yes. We have anonymized case studies on our website spanning retail, healthcare, financial services, and tech sectors, including six named customer case studies with signed consent. You can also view our listings on G2 and Gartner Peer Insights.",
+    "last_updated": "2026-06-06",
+    "review_due": "2026-12-05",
+    "owner": "Marketing"
+  }
+]

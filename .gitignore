@@ -1,0 +1,16 @@
+# Environment files
+.env
+backend/.env
+
+# Documentation folder
+docs/
+
+# Python cache & temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
