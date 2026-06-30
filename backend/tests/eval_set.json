@@ -1,0 +1,352 @@
+[
+  {
+    "query": "Does PeopleOS have SOC 2 Type II certification?",
+    "expected_match_id": "KB001",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for SOC 2 Type II certification"
+  },
+  {
+    "query": "Is your platform fully compliant with GDPR?",
+    "expected_match_id": "KB002",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for GDPR compliance"
+  },
+  {
+    "query": "Which payroll programs do you integrate with natively?",
+    "expected_match_id": "KB007",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Payroll integrations"
+  },
+  {
+    "query": "Do you have public REST APIs for clients?",
+    "expected_match_id": "KB008",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Open API availability"
+  },
+  {
+    "query": "What is the implementation timeline for enterprise companies?",
+    "expected_match_id": "KB012",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Enterprise implementation timeline"
+  },
+  {
+    "query": "Is dedicated support provided during onboarding?",
+    "expected_match_id": "KB013",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Dedicated implementation support"
+  },
+  {
+    "query": "What pricing model does PeopleOS use?",
+    "expected_match_id": "KB017",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Pricing model"
+  },
+  {
+    "query": "Are there any implementation or onboarding setup fees?",
+    "expected_match_id": "KB018",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Implementation fees"
+  },
+  {
+    "query": "What is your service uptime SLA percentage?",
+    "expected_match_id": "KB021",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Uptime SLA"
+  },
+  {
+    "query": "What customer support tiers do you have?",
+    "expected_match_id": "KB022",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Support tiers"
+  },
+  {
+    "query": "Can you share retail customer references?",
+    "expected_match_id": "KB026",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Retail sector references"
+  },
+  {
+    "query": "Do you have case studies in the healthcare sector?",
+    "expected_match_id": "KB027",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing exact phrasing match for Healthcare industry experience"
+  },
+  {
+    "query": "Does your company support Single Sign-On?",
+    "expected_match_id": "KB004",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing duplicate phrasing match for SSO support"
+  },
+  {
+    "query": "What is your penetration testing policy?",
+    "expected_match_id": "KB005",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing duplicate phrasing match for Penetration testing policy"
+  },
+  {
+    "query": "Do you integrate with Slack and Teams?",
+    "expected_match_id": "KB009",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Testing duplicate phrasing match for Slack and Microsoft Teams integration"
+  },
+  {
+    "query": "Does PeopleOS support native integration with Salesforce CRM?",
+    "expected_match_id": "KB009",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "Unsupported Salesforce Integration testing false positive behavior against Slack/Teams integration"
+  },
+  {
+    "query": "Is PeopleOS compliant with HIPAA for healthcare workers' personal bank details?",
+    "expected_match_id": "KB006",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "HIPAA vs Bank Details mismatch matching CCPA compliance (KB006)"
+  },
+  {
+    "query": "How does the uptime SLA affect my annual pricing discount?",
+    "expected_match_id": "KB021",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "SLA/Pricing Overlap testing crossover query matching Uptime SLA (KB021)"
+  },
+  {
+    "query": "Can I pay for my implementation support with credit cards?",
+    "expected_match_id": "KB013",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "Pricing/Implementation Overlap query matching Dedicated support (KB013)"
+  },
+  {
+    "query": "Is there a discount on your SOC 2 audit report?",
+    "expected_match_id": "KB001",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "Audit/Pricing Overlap query matching SOC 2 (KB001)"
+  },
+  {
+    "query": "Can we import user profiles directly from an active directory LDAP server?",
+    "expected_match_id": "KB010",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "Unsupported Active Directory LDAP query matching Workday/SAP (KB010)"
+  },
+  {
+    "query": "Do you offer a mobile application for Android and iOS?",
+    "expected_match_id": "KB009",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "Unsupported Mobile App matching Slack/Teams integration (KB009)"
+  },
+  {
+    "query": "what is the capital of France?",
+    "expected_match_id": "KB002",
+    "expected_tier": "Low / Escalate to SME",
+    "category": "unrelated",
+    "notes": "Completely unrelated query matching GDPR/Frankfurt host (KB002)"
+  },
+  {
+    "query": "How do I reset my admin password in the settings dashboard?",
+    "expected_match_id": "KB011",
+    "expected_tier": "Low / Escalate to SME",
+    "category": "unrelated",
+    "notes": "Unsupported password reset matching Bulk data import (KB011)"
+  },
+  {
+    "query": "what is your favorite color?",
+    "expected_match_id": "KB022",
+    "expected_tier": "Low / Escalate to SME",
+    "category": "unrelated",
+    "notes": "Completely unrelated query matching Support Tiers (KB022)"
+  },
+  {
+    "query": "tell me a joke about computers?",
+    "expected_match_id": "KB021",
+    "expected_tier": "Low / Escalate to SME",
+    "category": "unrelated",
+    "notes": "Completely unrelated query matching Uptime SLA (KB021)"
+  },
+  {
+    "query": "how do I bake sourdough bread?",
+    "expected_match_id": "KB014",
+    "expected_tier": "Low / Escalate to SME",
+    "category": "unrelated",
+    "notes": "Completely unrelated query matching Training Resources (KB014)"
+  },
+  {
+    "query": "Please describe your approach to data security including encryption standards, access controls, penetration testing frequency, and certifications held.",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part security question spanning KB001 (SOC 2), KB003 (Encryption), and KB005 (Pen tests)"
+  },
+  {
+    "query": "What is your implementation timeline and what training resources do you provide during onboarding?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part onboarding question spanning KB012 (Timeline) and KB014 (Training)"
+  },
+  {
+    "query": "What are your support tiers and what is your disaster recovery plan in case of an outage?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part support question spanning KB022 (SLA tiers) and KB024 (DR plan)"
+  },
+  {
+    "query": "Can you confirm your pricing model, minimum contract length, and whether implementation fees apply?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part contract question spanning KB017 (Pricing), KB018 (Fees), and KB020 (Contract length)"
+  },
+  {
+    "query": "Do you integrate with Workday, and separately, do you support bulk data import via CSV?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part integration question spanning KB010 (Workday) and KB011 (Bulk import)"
+  },
+  {
+    "query": "Do you have HIPAA compliance references in retail, and what is your annual pricing discount?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part query spanning KB017 (Discount), KB026 (Retail references), and KB027 (Healthcare HIPAA)"
+  },
+  {
+    "query": "What bulk data import formats are supported and what is your disaster recovery RTO?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part technical question spanning KB011 (Import formats) and KB024 (DR RTO)"
+  },
+  {
+    "query": "Does PeopleOS support SSO integration, and what is your monthly uptime guarantee?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part operational question spanning KB004 (SSO) and KB021 (Uptime SLA)"
+  },
+  {
+    "query": "What support tiers are available, and what is the typical implementation timeline for large enterprises?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part onboarding question spanning KB022 (Support tiers) and KB012 (Timeline)"
+  },
+  {
+    "query": "Can you provide retail case studies, and what are the encryption standards you support?",
+    "expected_match_id": "AMBIGUOUS",
+    "expected_tier": "Review Required or lower",
+    "category": "multi_part",
+    "notes": "Multi-part reference & security question spanning KB026 (Retail refs) and KB003 (Encryption)"
+  },
+  {
+    "query": "Are there any SSO protocols or identity providers your platform does NOT support?",
+    "expected_match_id": "KB004",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for SSO support (KB004)"
+  },
+  {
+    "query": "What payroll systems are you currently unable to integrate with?",
+    "expected_match_id": "KB007",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for Payroll integrations (KB007)"
+  },
+  {
+    "query": "What compliance certifications have you not yet achieved that competitors typically have?",
+    "expected_match_id": null,
+    "expected_tier": "Low / Escalate to SME",
+    "category": "negative_framing",
+    "notes": "Negative phrasing on missing certifications; expected match is null"
+  },
+  {
+    "query": "Besides the regions you currently mentioned, where do you NOT have data residency options?",
+    "expected_match_id": "KB002",
+    "expected_tier": "Low / Escalate to SME",
+    "category": "negative_framing",
+    "notes": "Negative phrasing on data residency (KB002); should escalate"
+  },
+  {
+    "query": "What is the maximum uptime SLA you are unable to guarantee above 99.9%?",
+    "expected_match_id": "KB021",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for Uptime SLA (KB021)"
+  },
+  {
+    "query": "What disaster recovery procedures are NOT tested semi-annually?",
+    "expected_match_id": "KB024",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for BCDR testing frequency (KB024)"
+  },
+  {
+    "query": "Which data backup frequencies are NOT supported by the platform?",
+    "expected_match_id": "KB025",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for Data backup frequency (KB025)"
+  },
+  {
+    "query": "What roles are NOT covered by training modules in the Academy?",
+    "expected_match_id": "KB014",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for Academy modules (KB014)"
+  },
+  {
+    "query": "Are there any EU countries where data is NOT stored by default?",
+    "expected_match_id": "KB002",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for GDPR EU data residency (KB002)"
+  },
+  {
+    "query": "What payroll software is currently NOT native to your integration list?",
+    "expected_match_id": "KB007",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative phrasing for native integrations list (KB007)"
+  },
+  {
+    "query": "Do you support integrations with SAP SuccessFactors and Workday?",
+    "expected_match_id": "KB010",
+    "expected_tier": "High / Auto-Answer",
+    "category": "true_match",
+    "notes": "Additional true_match case for Workday/SAP SuccessFactors"
+  },
+  {
+    "query": "How can I configure Microsoft Active Directory for SSO login?",
+    "expected_match_id": "KB004",
+    "expected_tier": "Review Required or lower",
+    "category": "false_positive_risk",
+    "notes": "Active Directory SSO query matching general SSO support (KB004)"
+  },
+  {
+    "query": "What training languages are NOT offered in the PeopleOS Academy?",
+    "expected_match_id": "KB014",
+    "expected_tier": "Review Required or lower",
+    "category": "negative_framing",
+    "notes": "Negative framing for supported training languages (KB014)"
+  }
+]
