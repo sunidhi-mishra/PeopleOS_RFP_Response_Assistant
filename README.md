@@ -1,4 +1,4 @@
-# RFP Match — A Confidence-Calibrated Retrieval Prototype
+# RFP Match — A Confidence-Calibrated Retrieval Prototype (Ongoing)
 
 **Live demo:** https://rfpresponseassistant.web.app/
 
