@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeopleOS - RFP Match</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header Bar -->
+    <header class="main-header">
+        <div class="header-content">
+            <h1 class="logo-text">PeopleOS</h1>
+            <span class="divider">|</span>
+            <span class="subtitle">RFP Response Assistant</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Left Panel: Input & Reference -->
+        <section class="left-panel">
+            <div class="panel-header">
+                <h2>Enter RFP Question</h2>
+            </div>
+            
+            <form id="rfp-form" class="query-form">
+                <div class="textarea-wrapper">
+                    <textarea 
+                        id="rfp-question" 
+                        placeholder="Paste an RFP question here — e.g. Does your platform support Single Sign-On?"
+                        maxlength="2000"
+                        required
+                    ></textarea>
+                </div>
+                
+                <button type="submit" id="submit-btn" class="btn-primary">
+                    <span class="btn-text">Find Matches</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </form>
+            
+            <div class="kb-meta">
+                Searching PeopleOS knowledge base · 30 entries across 6 categories
+            </div>
+            
+            <div class="category-reference">
+                <h3>Knowledge Base Categories</h3>
+                <div class="category-chips">
+                    <span class="chip chip-security">Security & Compliance</span>
+                    <span class="chip chip-integrations">Integrations & APIs</span>
+                    <span class="chip chip-implementation">Implementation & Onboarding</span>
+                    <span class="chip chip-pricing">Pricing & Licensing</span>
+                    <span class="chip chip-slas">SLAs & Support</span>
+                    <span class="chip chip-references">Customer References</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Results -->
+        <section class="right-panel">
+            <div class="panel-header">
+                <h2>Matching Knowledge Base Entries</h2>
+            </div>
+            
+            <div id="results-container" class="results-container">
+                <!-- Default Empty State -->
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <p class="empty-text">Results will appear here. Enter a question on the left to search the knowledge base.</p>
+                </div>
+
+                <!-- Error State (Hidden by default) -->
+                <div id="error-state" class="error-state hidden">
+                    <div class="error-icon">⚠</div>
+                    <p id="error-message" class="error-text">Could not connect to the matching service. Please ensure the backend is running.</p>
+                </div>
+
+                <!-- Matches List -->
+                <div id="matches-list" class="matches-list hidden">
+                    <!-- Cards will be dynamically injected here -->
+                </div>
+
+                <!-- Prototype Info Box (Hidden until results are displayed) -->
+                <div id="info-box" class="prototype-info-box hidden">
+                    <p>This prototype searches a knowledge base of 30 entries using semantic similarity. In a production system, the knowledge base would contain hundreds of verified entries with versioning, ownership workflows, and a feedback loop that improves match quality over time. Confidence scores reflect semantic similarity — not factual accuracy. Always verify answers marked <strong>Review Required</strong> or <strong>Escalate to SME</strong> before sending.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
