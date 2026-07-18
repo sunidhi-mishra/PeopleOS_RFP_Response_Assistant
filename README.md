@@ -94,7 +94,21 @@ uvicorn main:app --reload
 
 ### Frontend
 
-Open `frontend/index.html` in a browser, or serve it locally. Update the API URL in `app.js` if your backend is not running on the default port.
+Open `frontend/index.html` in a browser, or serve it locally. The browser loads `frontend/config.js` first, so the API URL can be changed there without editing `app.js`.
+
+To update the frontend API target from PowerShell:
+
+```powershell
+./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://your-backend.onrender.com/match"
+```
+
+### Deploying the full stack
+
+1. Deploy the backend to Render using `render.yaml`.
+2. Set `GEMINI_API_KEY` in the Render service environment.
+3. Run `./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://your-backend.onrender.com/match"`.
+4. Deploy the frontend to Firebase Hosting.
+5. Verify `GET /health` on the backend and then test the browser flow from the Firebase-hosted frontend.
 
 ### Running the eval suite
 
@@ -118,8 +132,12 @@ rfp-match-poc/
 │   └── requirements.txt
 ├── frontend/
 │   ├── index.html
+│   ├── config.js
 │   ├── style.css
 │   └── app.js
+├── scripts/
+│   └── Set-FrontendApiUrl.ps1
+├── render.yaml
 └── docs/                    # PM documentation — problem framing, decisions, gap analysis
 ```
 

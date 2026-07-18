@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000/match";
+const API_URL = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.API_URL) || "http://127.0.0.1:8000/match";
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("rfp-form");
