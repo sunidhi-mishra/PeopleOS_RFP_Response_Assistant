@@ -88,33 +88,63 @@ This is a scoped POC, not a production system. Named limitations:
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.template .env   # add your Gemini API key from aistudio.google.com
+cp .env.template .env   # fill in GEMINI_API_KEY; APP_ENV defaults to "development"
 uvicorn main:app --reload
 ```
 
+The backend reads two environment variables:
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `GEMINI_API_KEY` | Yes | — | Get from [aistudio.google.com](https://aistudio.google.com) |
+| `APP_ENV` | No | `production` | `development` adds localhost CORS origins |
+| `FRONTEND_URL` | No | — | Extra CORS origin for staging deployments |
+
 ### Frontend
 
-Open `frontend/index.html` in a browser, or serve it locally. The browser loads `frontend/config.js` first, so the API URL can be changed there without editing `app.js`.
-
-To update the frontend API target from PowerShell:
+Switch `config.js` to the development profile before opening locally:
 
 ```powershell
-./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://peopleos-rfp-response-assistant.onrender.com/match"
+# Point frontend at local backend (http://127.0.0.1:8000)
+./scripts/Set-FrontendApiUrl.ps1 -Env dev
+```
+
+Then open `frontend/index.html` in a browser or serve it with VS Code Live Server.
+
+Switch back to production before deploying:
+
+```powershell
+./scripts/Set-FrontendApiUrl.ps1 -Env prod
 ```
 
 ### Deploying the full stack
 
-1. The backend is deployed on Render at `https://peopleos-rfp-response-assistant.onrender.com`.
-2. Confirm `GEMINI_API_KEY` is set in the Render service environment.
-3. Run `./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://peopleos-rfp-response-assistant.onrender.com/match"`.
-4. Deploy the frontend to Firebase Hosting.
-5. Verify `GET /health` on the backend and then test the browser flow from the Firebase-hosted frontend.
+**Backend (Render)**
+
+1. Push changes to the connected git branch — Render auto-deploys on push.
+2. Confirm these environment variables are set in the Render dashboard:
+   - `GEMINI_API_KEY` — your Gemini API key (never commit this)
+   - `APP_ENV` — set to `production` (already declared in `render.yaml`)
+3. Verify the deploy: `GET https://peopleos-rfp-response-assistant.onrender.com/health`
+   - Expected response: `{"status": "ok", "env": "production"}`
+
+**Frontend (Firebase)**
+
+```powershell
+# Ensure config.js is on the production profile
+./scripts/Set-FrontendApiUrl.ps1 -Env prod
+
+# Deploy
+firebase deploy --only hosting
+```
+
+Firebase will exclude `config.dev.js` and `config.prod.js` from the hosted build (configured in `firebase.json`). `config.js` is served with `no-cache` headers so changes take effect immediately after each deploy.
 
 ### Running the eval suite
 
 ```bash
 cd backend
-py run_evals.py
+py tests/run_evals.py
 ```
 
 ---
@@ -127,17 +157,22 @@ rfp-match-poc/
 │   ├── main.py              # FastAPI app, /match and /health endpoints
 │   ├── embedder.py          # Embedding, cosine similarity, confidence + staleness logic
 │   ├── knowledge_base.json  # 30 Q&A pairs across 6 categories
-│   ├── eval_set.json        # 50 labeled test cases
-│   ├── run_evals.py         # Automated evaluation scorecard
-│   └── requirements.txt
+│   ├── .env.template        # Copy to .env and fill in values — never commit .env
+│   ├── requirements.txt
+│   └── tests/
+│       ├── eval_set.json    # 50 labeled test cases
+│       └── run_evals.py     # Automated evaluation scorecard
 ├── frontend/
 │   ├── index.html
-│   ├── config.js
+│   ├── config.js            # Active config (production by default) — loaded by index.html
+│   ├── config.dev.js        # Development profile (local backend)
+│   ├── config.prod.js       # Production profile (Render backend)
 │   ├── style.css
 │   └── app.js
 ├── scripts/
-│   └── Set-FrontendApiUrl.ps1
-├── render.yaml
+│   └── Set-FrontendApiUrl.ps1  # Switch config.js between dev/prod profiles
+├── render.yaml              # Render deployment blueprint (backend)
+├── firebase.json            # Firebase Hosting config (frontend)
 └── docs/                    # PM documentation — problem framing, decisions, gap analysis
 ```
 

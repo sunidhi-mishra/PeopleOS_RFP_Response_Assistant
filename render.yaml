@@ -5,6 +5,12 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: GEMINI_API_KEY
-        sync: false
+        sync: false        # Set manually in Render dashboard — never commit this value
+      - key: APP_ENV
+        value: production  # Controls CORS origin list and logging behaviour
+      # Uncomment to allow an additional CORS origin (e.g. staging frontend)
+      # - key: FRONTEND_URL
+      #   value: https://your-staging-app.web.app
