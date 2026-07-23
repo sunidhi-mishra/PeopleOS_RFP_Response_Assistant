@@ -3,7 +3,7 @@
 backend/.env
 
 # Documentation folder
-docs/
+#docs/
 
 # Python cache & temporary files
 __pycache__/

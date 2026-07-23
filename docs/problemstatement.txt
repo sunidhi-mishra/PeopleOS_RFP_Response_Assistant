@@ -1,0 +1,231 @@
+Product Overview
+Build a web application called RFP Match for a fictional HR Tech SaaS company called PeopleOS. This is a semantic search tool that helps Sales Engineers find pre-written answers to incoming RFP (Request for Proposal) questions from a curated knowledge base.
+The tool takes a question typed by the user, searches a knowledge base of 30 pre-written Q&A pairs using semantic similarity, and returns the top 3 matches with a confidence score and a decision label telling the user what to do with the result.
+The application has a Python FastAPI backend and a clean HTML/CSS/JavaScript frontend. It is hosted on Firebase.
+
+Tech Stack
+
+Backend: Python, FastAPI, Google Generative AI SDK (for Gemini text-embedding-004 model), numpy, uvicorn, python-dotenv
+Frontend: HTML, CSS, vanilla JavaScript (no frameworks)
+Hosting: Firebase Hosting for frontend, backend runs separately
+Embedding model: Google Gemini text-embedding-004 via Google AI Studio API (free tier)
+No database required — knowledge base is a static JSON file loaded into memory
+
+
+Project Structure
+rfp-match-poc/
+├── backend/
+│   ├── main.py
+│   ├── embedder.py
+│   ├── knowledge_base.json
+│   ├── requirements.txt
+│   └── .env
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+├── firebase.json
+└── .firebaserc
+
+Knowledge Base
+The knowledge base is a JSON file with 30 entries. Each entry has these exact fields:
+json{
+  "id": "KB001",
+  "category": "Security & Compliance",
+  "question": "Does PeopleOS hold SOC 2 Type II certification?",
+  "answer": "Yes. PeopleOS achieved SOC 2 Type II certification in March 2022, covering Security, Availability, and Confidentiality trust service criteria. Our most recent audit was completed in February 2024 by Prescient Assurance. The full report is available under NDA upon request.",
+  "last_updated": "2024-02-15",
+  "review_due": "2024-08-15",
+  "owner": "Security Team"
+}
+The 30 entries are spread across 6 categories with the following IDs and content:
+Category: Security & Compliance — KB001 through KB006
+KB001: SOC 2 Type II certification — answer as above
+
+KB002: GDPR compliance — PeopleOS is fully GDPR compliant, acts as Data Processor, maintains DPA, supports DSARs within 72 hours, EU data stored in Frankfurt AWS eu-central-1. Last updated 2024-01-10. Owner: Legal & Compliance. Review due 2024-07-10.
+
+KB003: Data encryption standard — AES-256 at rest, TLS 1.2 or higher in transit, AWS KMS key management with quarterly rotation. Last updated 2023-11-20. Owner: Security Team. Review due 2024-05-20.
+
+KB004: SSO support — supports SAML 2.0 and OAuth 2.0, pre-built integrations with Okta, Azure AD, Google Workspace, OneLogin, custom SAML at no extra cost. Last updated 2024-03-01. Owner: Engineering. Review due 2024-09-01.
+
+KB005: Penetration testing policy — annual third-party pen tests by Bishop Fox, client testing permitted with 10 business days notice and signed testing agreement. Last updated 2024-01-25. Owner: Security Team. Review due 2024-07-25.
+
+KB006: CCPA compliance — fully compliant with CCPA and CPRA, supports consumer rights requests, does not sell personal data. Last updated 2023-12-05. Owner: Legal & Compliance. Review due 2024-06-05.
+Category: Integrations & APIs — KB007 through KB011
+KB007: Payroll integrations — native integrations with ADP Workforce Now, Gusto, Paychex Flex, Rippling. Bi-directional sync, configurable schedule default 4 hours. Last updated 2024-02-20. Owner: Partnerships. Review due 2024-08-20.
+
+KB008: Open API availability — REST API with OpenAPI 3.0 spec for Enterprise plan customers, 1000 requests per minute per tenant, webhooks for 22 event types. Last updated 2024-03-10. Owner: Engineering. Review due 2024-09-10.
+
+KB009: Slack and Microsoft Teams integration — native integrations for both, Slack on Professional and Enterprise, Teams on Enterprise only. Last updated 2024-01-15. Owner: Product. Review due 2024-07-15.
+
+KB010: Workday and SAP SuccessFactors integration — supported via enterprise integration layer using SFTP and REST connectors, 2-week technical discovery required. Last updated 2023-10-30. Owner: Solutions Engineering. Review due 2024-04-30.
+
+KB011: Bulk data import formats — supports CSV, XLSX, JSON, pre-formatted templates available, row-level error reporting. Last updated 2023-09-15. Owner: Engineering. Review due 2024-03-15.
+Category: Implementation & Onboarding — KB012 through KB016
+KB012: Enterprise implementation timeline — 10 to 14 weeks for 1000 to 10000 employee clients, broken into discovery, data migration, integration, UAT, and go-live phases. Last updated 2024-02-01. Owner: Customer Success. Review due 2024-08-01.
+
+KB013: Dedicated implementation support — Enterprise clients get dedicated Implementation Manager and Solutions Engineer, Professional clients get pooled support with named CSM. Last updated 2024-01-20. Owner: Customer Success. Review due 2024-07-20.
+
+KB014: Training resources — PeopleOS Academy with 40 plus role-based modules, bi-weekly live webinars, custom sessions for Enterprise, available in English, Spanish, French. Last updated 2023-11-10. Owner: Customer Success. Review due 2024-05-10.
+
+KB015: Data migration process — four phases: audit and cleansing, template-based extraction, sandbox validation, production migration with rollback. Experience with BambooHR, Zenefits, ADP, Oracle HCM. Last updated 2024-03-05. Owner: Solutions Engineering. Review due 2024-09-05.
+
+KB016: Phased rollout support — supported by business unit, geography, or employee group, parallel pilot and production environments, recommended for 2500 plus employees. Last updated 2023-08-20. Owner: Customer Success. Review due 2024-02-20.
+Category: Pricing & Licensing — KB017 through KB020
+KB017: Pricing model — per seat per month, Starter $8 up to 200 employees, Professional $14 up to 1000 employees, Enterprise custom above 1000, 15% annual discount, module add-ons priced separately. Last updated 2024-03-01. Owner: Sales. Review due 2024-09-01.
+
+KB018: Implementation fees — Professional plan one-time fee $3500 to $7500, Enterprise scoped via SOW, no hidden fees. Last updated 2024-02-10. Owner: Sales. Review due 2024-08-10.
+
+KB019: Free trial or pilot — 14-day sandbox trial for Professional prospects, paid pilot for Enterprise typically 60 to 90 days credited toward first year. Last updated 2024-01-05. Owner: Sales. Review due 2024-07-05.
+
+KB020: Minimum contract length — 12 months minimum, 2-year 5% discount, 3-year 10% discount, no monthly billing for Enterprise. Last updated 2023-12-01. Owner: Sales. Review due 2024-06-01.
+Category: SLAs & Support — KB021 through KB025
+KB021: Uptime SLA — 99.9% uptime guarantee monthly, less than 44 minutes unplanned downtime per month, automatic SLA credits for breaches, current 12-month uptime 99.97%. Last updated 2024-03-10. Owner: Engineering. Review due 2024-09-10.
+
+KB022: Support tiers — Standard email 24-hour response 9AM-6PM CT, Priority email plus phone plus chat 4-hour P1 response 24/7, Dedicated named engineer 1-hour P1 response quarterly reviews. Last updated 2024-02-15. Owner: Customer Success. Review due 2024-08-15.
+
+KB023: Critical incident response — four severity levels P1 to P4, P1 incident commander in 15 minutes, customer communication in 30 minutes, status page updated in real time, post-incident report within 5 business days, average P1 resolution 47 minutes. Last updated 2024-03-08. Owner: Engineering. Review due 2024-09-08.
+
+KB024: Disaster recovery plan — documented BCDR tested semi-annually, RTO 4 hours, RPO 1 hour, real-time replication to secondary AWS region. Last updated 2024-01-30. Owner: Engineering. Review due 2024-07-30.
+
+KB025: Data backup frequency — every 6 hours, encrypted at rest, 90 days retention Enterprise, 30 days Professional, monthly restore integrity testing, point-in-time recovery 30 days on Enterprise. Last updated 2023-10-15. Owner: Engineering. Review due 2024-04-15.
+Category: Customer References & Case Studies — KB026 through KB030
+KB026: Retail sector references — 14 enterprise retail customers including two Fortune 500 retailers, up to three reference calls available under NDA, coordinated via Account Executive within 10 business days. Last updated 2024-02-28. Owner: Sales. Review due 2024-08-28.
+
+KB027: Healthcare industry experience — 22 healthcare clients, HIPAA compliant BAA available, experience with credentialing data and shift-based workforces, case study available for 3200-employee regional healthcare network. Last updated 2024-01-18. Owner: Sales. Review due 2024-07-18.
+
+KB028: Measurable customer outcomes — 40% reduction in HR admin time, 28% improvement in new hire time-to-productivity, 60% reduction in payroll processing errors, 35% increase in employee self-service adoption within 90 days. Last updated 2024-03-01. Owner: Marketing. Review due 2024-09-01.
+
+KB029: Total customer count and size — 183 active enterprise clients as of Q1 2024, average customer size 1200 employees, largest customer 8400 employees, 94% retention rate, 112% NRR. Last updated 2024-03-15. Owner: Sales. Review due 2024-09-15.
+
+KB030: Public case studies — anonymized case studies on website across retail, healthcare, financial services, technology sectors, six named case studies with consent, G2 and Gartner Peer Insights listings available. Last updated 2024-02-05. Owner: Marketing. Review due 2024-08-05.
+
+Backend Specification
+embedder.py
+This file handles all embedding and similarity logic.
+On startup it loads the knowledge base JSON file. It embeds every answer in the knowledge base using the Gemini text-embedding-004 model and stores those embeddings in memory as a list of numpy arrays. This embedding happens once at startup, not on every request.
+When a query comes in, it embeds the query using the same model and computes cosine similarity between the query embedding and every knowledge base embedding. It returns the top 3 results sorted by similarity score descending.
+Each result includes: the full knowledge base entry, the similarity score as a float between 0 and 1, a confidence tier label, a decision label, a staleness flag, and a decision color.
+Confidence tier logic — this is critical and must be exact:
+
+Similarity score 0.85 and above: confidence tier is "High", decision label is "Auto-Answer", decision color is green
+Similarity score 0.60 to 0.84: confidence tier is "Medium", decision label is "Review Required", decision color is amber
+Similarity score below 0.60: confidence tier is "Low", decision label is "Escalate to SME", decision color is red
+
+Staleness flag logic:
+Compare the review_due date in each knowledge base entry against today's date. If review_due is in the past, set is_stale to true. This flag is returned independently of the confidence score — a high confidence match can still be stale.
+main.py
+FastAPI application with the following:
+
+CORS enabled for all origins (this is a demo application)
+Single POST endpoint at /match
+Request body: {"question": "string"}
+On startup: initialize the embedder, load and embed the knowledge base
+The /match endpoint calls the embedder, returns the top 3 results
+Also expose a GET endpoint at /health that returns {"status": "ok"}
+
+Response format for /match:
+json{
+  "query": "the original question text",
+  "results": [
+    {
+      "rank": 1,
+      "id": "KB001",
+      "category": "Security & Compliance",
+      "matched_question": "Does PeopleOS hold SOC 2 Type II certification?",
+      "answer": "full answer text",
+      "last_updated": "2024-02-15",
+      "review_due": "2024-08-15",
+      "owner": "Security Team",
+      "similarity_score": 0.91,
+      "confidence_tier": "High",
+      "decision_label": "Auto-Answer",
+      "decision_color": "green",
+      "is_stale": false
+    }
+  ]
+}
+requirements.txt
+fastapi
+uvicorn
+google-generativeai
+numpy
+python-dotenv
+.env file
+GEMINI_API_KEY=your_api_key_here
+
+Frontend Specification
+Visual Design
+Clean, professional, minimal. Dark navy header bar with the PeopleOS logo text in white and a subtitle that says "RFP Response Assistant." White background for the main content area. Use a sans-serif font throughout. The overall feel should be like an internal enterprise tool — functional and trustworthy, not flashy.
+Layout
+Two-panel layout on desktop. On mobile, panels stack vertically.
+Left panel — Query Input (35% width)
+
+Panel title: "Enter RFP Question"
+A large textarea for the user to type or paste an RFP question. Placeholder text: "Paste an RFP question here — e.g. Does your platform support Single Sign-On?"
+A submit button labeled "Find Matches" in navy blue
+Below the button, a small text that says "Searching PeopleOS knowledge base · 30 entries across 6 categories"
+When a search is in progress, the button shows a spinner and is disabled
+Below the search area, show 6 category chips as visual reference: Security & Compliance, Integrations & APIs, Implementation & Onboarding, Pricing & Licensing, SLAs & Support, Customer References. These are display only, not clickable filters.
+
+Right panel — Results (65% width)
+Default state before any search: show a centered empty state message — "Results will appear here. Enter a question on the left to search the knowledge base."
+After a search, show three result cards stacked vertically.
+Each result card contains:
+Top section:
+
+Rank badge (1, 2, 3) in a small circle on the top left
+Category badge — colored label matching the category. Use distinct colors per category: Security = red, Integrations = blue, Implementation = green, Pricing = purple, SLAs = orange, References = teal
+On the top right: the decision label badge — color coded green for Auto-Answer, amber for Review Required, red for Escalate to SME
+
+Second section:
+
+Label: "Matched Question"
+The matched question text from the knowledge base in slightly muted text
+
+Third section:
+
+Label: "Answer"
+The full answer text — this is the main content of the card
+
+Fourth section — metadata row:
+
+Confidence score displayed as: a thin horizontal progress bar showing the similarity score visually, with the percentage number next to it (e.g. "91% match"). Bar color matches decision color — green, amber, or red
+Owner: show the owner field with a person icon
+Last updated: show the date with a calendar icon
+If is_stale is true: show a yellow warning badge that says "⚠ Answer may be outdated — review before use"
+
+Bottom section:
+
+A single button: "Mark as Used" — clicking this does not need to do anything functional in this prototype. It should show a brief "Noted ✓" confirmation. This button exists to signal that in a production system this action would log the usage and feed the learning loop.
+
+Below all three cards (only shown after a search returns results):
+
+A light grey information box with this text: "This prototype searches a knowledge base of 30 entries using semantic similarity. In a production system, the knowledge base would contain hundreds of verified entries with versioning, ownership workflows, and a feedback loop that improves match quality over time. Confidence scores reflect semantic similarity — not factual accuracy. Always verify answers marked Review Required or Escalate to SME before sending."
+app.js behavior
+On submit: send POST request to the backend /match endpoint with the question text. Handle loading state. Render results. Handle errors gracefully — if the backend is unreachable, show a clear error message in the results panel: "Could not connect to the matching service. Please ensure the backend is running."
+Do not clear results when a new search begins — keep the previous results visible until new results arrive. This prevents jarring blank states.
+
+Phase Build Plan
+Tell Antigravity to build in exactly these phases:
+Phase 1: Knowledge base and backend core
+
+Create the knowledge_base.json file with all 30 entries exactly as specified. Create embedder.py with the embedding logic, cosine similarity, confidence tier logic, and staleness detection. Create main.py with the FastAPI app, CORS, startup embedding, and the /match and /health endpoints. Create requirements.txt and .env template. Test that the backend starts and the /health endpoint returns ok.
+Phase 2: Backend integration test
+
+Test the /match endpoint with five sample questions and verify the response format is correct and confidence tiers are being assigned properly. The five test questions are: "Do you have SOC 2 certification?", "What payroll systems do you integrate with?", "How long does implementation take?", "What is your uptime guarantee?", "Can you provide healthcare references?"
+Phase 3: Frontend
+
+Build index.html, style.css, and app.js exactly as specified. The frontend should be fully functional when connected to the running backend. Test the complete flow end to end.
+Phase 4: Firebase configuration
+
+Set up firebase.json and .firebaserc for Firebase Hosting of the frontend. The backend runs separately and is not hosted on Firebase in this prototype. Update the API endpoint URL in app.js to point to wherever the backend is running.
+
+Important Notes For Antigravity
+
+The Gemini API key goes in the .env file and is loaded via python-dotenv. Never hardcode it.
+The knowledge base embeddings are computed once at startup and cached in memory. Do not re-embed on every request — this would be slow and expensive.
+Cosine similarity must be computed between the query embedding and each knowledge base entry's pre-computed embedding.
+The staleness check compares review_due date against today's date at the time of the request.
+The frontend makes requests to the backend. CORS must be enabled on the backend to allow this.
+This is a prototype. No authentication, no database, no persistent storage. Keep it simple and functional.
