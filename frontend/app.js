@@ -1,5 +1,12 @@
-const API_URL = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.API_URL) || "http://127.0.0.1:8000/match";
-const APP_ENV = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.ENV) || "development";
+const PROD_API_URL = "https://peopleos-rfp-response-assistant.onrender.com/match";
+const LOCAL_API_URL = "http://127.0.0.1:8000/match";
+const isLocalHost =
+    window.location.protocol === "file:" ||
+    ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+
+const config = window.RFP_MATCH_CONFIG || {};
+const API_URL = isLocalHost ? LOCAL_API_URL : (config.API_URL || PROD_API_URL);
+const APP_ENV = isLocalHost ? "development" : (config.ENV || "production");
 
 // Abort fetch after this many milliseconds (covers sleeping Render free-tier instances)
 const FETCH_TIMEOUT_MS = 30000;

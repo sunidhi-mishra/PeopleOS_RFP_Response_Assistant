@@ -177,20 +177,7 @@ curl http://127.0.0.1:8000/health
 
 ### Frontend
 
-The frontend reads its API URL from `frontend/config.js` (via `window.RFP_MATCH_CONFIG`). Switch to the development profile before opening locally:
-
-```powershell
-# Point the frontend at the local backend (http://127.0.0.1:8000)
-./scripts/Set-FrontendApiUrl.ps1 -Env dev
-```
-
-Then open `frontend/index.html` in a browser, or serve it with VS Code Live Server (port 5500).
-
-Switch back to production before deploying:
-
-```powershell
-./scripts/Set-FrontendApiUrl.ps1 -Env prod
-```
+With the backend running locally (`APP_ENV=development`), open `frontend/index.html` in a browser or serve it with VS Code Live Server (port 5500). When the page is served from `localhost`, `127.0.0.1`, or opened as a local file, `app.js` automatically targets `http://127.0.0.1:8000/match`. Production builds on Firebase use the URL in `frontend/config.js`.
 
 ### Running the test and eval scripts
 
@@ -240,8 +227,7 @@ git push origin main
 # 2. Verify backend
 curl https://peopleos-rfp-response-assistant.onrender.com/health
 
-# 3. Frontend — set prod config and deploy
-./scripts/Set-FrontendApiUrl.ps1 -Env prod
+# 3. Frontend — deploy
 firebase deploy --only hosting
 ```
 
@@ -271,13 +257,9 @@ RFPProject/
 │       └── eval_set.json        # Labeled evaluation dataset
 ├── frontend/
 │   ├── index.html               # Single-page UI
-│   ├── config.js                # Active API config — loaded by index.html (production default)
-│   ├── config.dev.js            # Development profile — local backend (not deployed)
-│   ├── config.prod.js           # Production profile — Render backend (reference copy)
+│   ├── config.js                # Production API config (used when hosted on Firebase)
 │   ├── style.css                # All styling and responsive layout
-│   └── app.js                   # Fetch logic, error handling, result rendering
-├── scripts/
-│   └── Set-FrontendApiUrl.ps1   # Switch config.js: -Env dev | -Env prod | -ApiUrl <url>
+│   └── app.js                   # Fetch logic, hostname-based local/prod routing, result rendering
 ├── render.yaml                  # Render deployment blueprint — build/start commands, env vars
 ├── firebase.json                # Firebase Hosting config — cache headers, ignore rules, rewrite
 ├── .firebaserc                  # Firebase project mapping

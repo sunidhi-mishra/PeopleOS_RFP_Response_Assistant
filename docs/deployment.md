@@ -65,7 +65,7 @@ graph LR
 **Local tooling**
 
 - Python 3 with `pip` (for local testing before release)
-- PowerShell (for `scripts/Set-FrontendApiUrl.ps1`; manual config copy works on other shells)
+- Firebase CLI (for frontend deploys)
 - `curl` or similar for health checks
 
 ---
@@ -97,7 +97,7 @@ cp .env.template .env
 
 ### Frontend
 
-The frontend has **no server-side environment variables**. Runtime config is baked into the static file `frontend/config.js`:
+The frontend has **no server-side environment variables**. Production URL is in `frontend/config.js`:
 
 ```javascript
 window.RFP_MATCH_CONFIG = {
@@ -106,26 +106,14 @@ window.RFP_MATCH_CONFIG = {
 };
 ```
 
-| File | Purpose | Deployed? |
-|---|---|---|
-| `config.js` | Active config loaded by `index.html` | **Yes** — must point at production backend before deploy |
-| `config.prod.js` | Canonical production reference | No (excluded by `firebase.json`) |
-| `config.dev.js` | Local development (`http://127.0.0.1:8000/match`) | No (excluded by `firebase.json`) |
+`app.js` routes requests by hostname — no config switching required:
 
-Switch `config.js` with the PowerShell helper:
+| Served from | API target |
+|---|---|
+| `localhost`, `127.0.0.1`, or `file://` | `http://127.0.0.1:8000/match` (local backend) |
+| Firebase Hosting | URL from `config.js` (Render backend) |
 
-```powershell
-./scripts/Set-FrontendApiUrl.ps1 -Env dev     # local backend
-./scripts/Set-FrontendApiUrl.ps1 -Env prod    # production backend
-./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://your-staging.onrender.com/match"
-```
-
-On bash/macOS without PowerShell, copy manually:
-
-```bash
-cp frontend/config.prod.js frontend/config.js   # production
-cp frontend/config.dev.js frontend/config.js    # local
-```
+For local frontend testing, run the backend with `APP_ENV=development` and open the page from Live Server or a local file. Production deploys always use `config.js` as committed.
 
 ### Test scripts (optional)
 
@@ -193,39 +181,34 @@ On Render's free tier, inactive services spin down. The first request after idle
 ### How it works
 
 1. Firebase serves static files from the `frontend/` directory.
-2. `firebase.json` excludes `config.dev.js` and `config.prod.js`; only `config.js` is uploaded.
-3. All routes rewrite to `index.html` (single-page app).
-4. Cache headers:
+2. All routes rewrite to `index.html` (single-page app).
+3. Cache headers:
    - `index.html`, `config.js` — no cache (immediate updates)
    - `app.js`, `style.css` — long-lived immutable cache (same paths replaced on redeploy)
 
 ### Deploy steps
 
-1. **Set production API URL** in `config.js`:
-   ```powershell
-   ./scripts/Set-FrontendApiUrl.ps1 -Env prod
-   ```
-2. **Confirm** `frontend/config.js` matches `frontend/config.prod.js` (production Render `/match` URL).
-3. **Deploy**:
+1. **Deploy**:
    ```bash
    firebase deploy --only hosting
    ```
-4. **Verify** the live site (see [Post-deploy verification](#post-deploy-verification)).
+2. **Verify** the live site (see [Post-deploy verification](#post-deploy-verification)).
+
+`config.js` is committed with production values — no pre-deploy config step is needed.
 
 ### Frontend-only release
 
 Use when changes touch only `frontend/`:
 
-1. Run `./scripts/Set-FrontendApiUrl.ps1 -Env prod`.
-2. `firebase deploy --only hosting`.
-3. Open https://rfpresponseassistant.web.app and submit a test question.
+1. `firebase deploy --only hosting`
+2. Open https://rfpresponseassistant.web.app and submit a test question.
 
 ### If the backend URL changes
 
-Update all three places, then redeploy the frontend:
+Update both places, then redeploy the frontend:
 
-1. `frontend/config.prod.js` — canonical production URL
-2. `frontend/config.js` — via `Set-FrontendApiUrl.ps1 -Env prod`
+1. `frontend/config.js` — production API URL
+2. `frontend/app.js` — `PROD_API_URL` constant (fallback)
 3. `backend/tests/config.py` — `DEPLOYED_BASE_URL` (for test scripts)
 
 ---
@@ -247,11 +230,12 @@ py backend/tests/test_backend.py --local
 py backend/tests/test_staleness.py
 ```
 
-For frontend changes, switch to dev config and test against the local backend:
+For frontend changes, test against the local backend:
 
-```powershell
-./scripts/Set-FrontendApiUrl.ps1 -Env dev
+```bash
+# With backend running locally (APP_ENV=development)
 # Open frontend/index.html or use Live Server on port 5500
+# app.js auto-targets http://127.0.0.1:8000 on localhost
 ```
 
 ### 2. Deploy backend
@@ -293,15 +277,7 @@ py backend/tests/run_evals.py
 
 If `embedder_ready` is `false`, **do not deploy the frontend** until the backend is fixed.
 
-### 4. Prepare frontend config
-
-```powershell
-./scripts/Set-FrontendApiUrl.ps1 -Env prod
-```
-
-Ensure you are **not** deploying with `-Env dev` or a stale custom URL.
-
-### 5. Deploy frontend
+### 4. Deploy frontend
 
 ```bash
 firebase deploy --only hosting
@@ -309,21 +285,13 @@ firebase deploy --only hosting
 
 Note the hosting URL in the CLI output (should match `https://rfpresponseassistant.web.app`).
 
-### 6. Post-deploy verification (production)
+### 5. Post-deploy verification (production)
 
 1. Open https://rfpresponseassistant.web.app
 2. Open browser DevTools → Network; confirm requests go to `peopleos-rfp-response-assistant.onrender.com/match`
 3. Submit a known question (e.g. "Does PeopleOS support Single Sign-On?")
 4. Confirm top match returns with rank, decision label, and similarity score
 5. If the backend was cold, retry once if the first request times out
-
-### 7. Post-release (local cleanup)
-
-Restore dev config so local work does not accidentally hit production:
-
-```powershell
-./scripts/Set-FrontendApiUrl.ps1 -Env dev
-```
 
 ---
 
@@ -379,12 +347,9 @@ There is no separate staging stack in the repository, but you can stand one up:
 
 **Staging frontend (Firebase)**
 
-1. Use a separate Firebase project or hosting site, **or** deploy locally with a custom config:
-   ```powershell
-   ./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://your-staging.onrender.com/match"
-   firebase deploy --only hosting
-   ```
-2. Ensure the staging backend's CORS allows the staging frontend origin (`FRONTEND_URL` or `APP_ENV=development` for localhost testing).
+1. Use a separate Firebase project or hosting site.
+2. Update `frontend/config.js` with the staging backend URL before deploy.
+3. Ensure the staging backend's CORS allows the staging frontend origin (`FRONTEND_URL` or `APP_ENV=development` for localhost testing).
 
 **Test against staging**
 
@@ -399,12 +364,11 @@ TEST_BASE_URL=https://your-staging.onrender.com py backend/tests/test_backend.py
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `/health` returns `embedder_ready: false` | Missing/invalid `GEMINI_API_KEY`, bad KB JSON, Gemini outage | Check Render logs at startup; verify env var and `knowledge_base.json` |
-| Frontend "Could not reach the matching service" | Backend down, wrong URL in `config.js`, CORS block | Verify `/health`; run `Set-FrontendApiUrl.ps1 -Env prod`; check browser console for CORS |
+| Frontend "Could not reach the matching service" | Backend down, wrong URL in `config.js`, CORS block | Verify `/health`; confirm `config.js` has production URL; check browser console for CORS |
 | Request times out after 30s | Render cold start | Wait and retry; first request after idle wakes the service |
 | HTTP 503 on `/match` | Transient Gemini failure or embedder not ready | Retry; check Render logs |
 | HTTP 502 on `/match` | Permanent Gemini/upstream error | Check API key quota and Gemini status |
 | CORS error in browser | Frontend origin not in backend allow list | Ensure `APP_ENV=production` and frontend is on `rfpresponseassistant.web.app`; add `FRONTEND_URL` for custom domains |
-| Old API URL after frontend deploy | Deployed with dev `config.js` | Run `Set-FrontendApiUrl.ps1 -Env prod` and redeploy |
 | UI works but tests fail | Tests target wrong URL | Use `--local` or `TEST_BASE_URL` |
 
 ---
@@ -420,10 +384,8 @@ TEST_BASE_URL=https://your-staging.onrender.com py backend/tests/test_backend.py
 
 **Frontend**
 
-- [ ] `./scripts/Set-FrontendApiUrl.ps1 -Env prod` run
 - [ ] `firebase deploy --only hosting` succeeded
 - [ ] Live site loads and returns matches
-- [ ] `./scripts/Set-FrontendApiUrl.ps1 -Env dev` restored for local work
 
 **Secrets**
 
@@ -440,7 +402,6 @@ TEST_BASE_URL=https://your-staging.onrender.com py backend/tests/test_backend.py
 | `firebase.json` | Hosting paths, cache headers, rewrites |
 | `.firebaserc` | Firebase project ID (`rfpresponseassistant`) |
 | `backend/.env.template` | Local env variable template |
-| `frontend/config.prod.js` | Production API URL reference |
-| `frontend/config.dev.js` | Local development API URL |
-| `scripts/Set-FrontendApiUrl.ps1` | Switch active frontend config |
+| `frontend/config.js` | Production API URL |
+| `frontend/app.js` | Hostname-based local/prod routing |
 | `backend/tests/config.py` | Default deployed URL for test scripts |

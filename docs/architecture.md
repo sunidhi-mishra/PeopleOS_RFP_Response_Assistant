@@ -90,7 +90,7 @@ Defined in `firebase.json` and `.firebaserc`:
 |---|---|
 | Public directory | `frontend/` |
 | SPA rewrite | All routes → `/index.html` |
-| Excluded from deploy | `config.dev.js`, `config.prod.js`, dotfiles, `node_modules` |
+| Excluded from deploy | Dotfiles, `node_modules` |
 
 **Cache headers:**
 
@@ -101,7 +101,7 @@ Defined in `firebase.json` and `.firebaserc`:
 
 ### Frontend API configuration
 
-The active backend URL is not hard-coded in `app.js`. It is loaded from `window.RFP_MATCH_CONFIG` in `config.js`:
+Production URL is defined in `frontend/config.js`:
 
 ```javascript
 window.RFP_MATCH_CONFIG = {
@@ -110,15 +110,14 @@ window.RFP_MATCH_CONFIG = {
 };
 ```
 
-Switch environments with `scripts/Set-FrontendApiUrl.ps1`:
+`app.js` selects the API target by hostname:
 
-```powershell
-./scripts/Set-FrontendApiUrl.ps1 -Env dev    # copies config.dev.js → config.js
-./scripts/Set-FrontendApiUrl.ps1 -Env prod   # copies config.prod.js → config.js
-./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://staging.onrender.com/match"
-```
+| Served from | API URL | `ENV` label |
+|---|---|---|
+| `localhost`, `127.0.0.1`, or `file://` | `http://127.0.0.1:8000/match` | `development` |
+| Firebase Hosting (production) | `config.js` → Render backend | `production` |
 
-Always run `-Env prod` before `firebase deploy --only hosting`.
+No config switching is required before deploy — `config.js` always holds production values.
 
 Step-by-step release workflow, verification, and troubleshooting: [`deployment.md`](./deployment.md).
 
@@ -132,14 +131,12 @@ Step-by-step release workflow, verification, and troubleshooting: [`deployment.m
 |---|---|
 | `index.html` | Two-column layout: question input (left) and results panel (right). Loads `config.js` before `app.js`. |
 | `style.css` | PeopleOS design system via CSS variables. Responsive breakpoint at 900px (stacked layout). |
-| `config.js` | Active runtime config — API URL and environment label. |
-| `config.dev.js` | Development profile pointing at `http://127.0.0.1:8000/match`. Not deployed. |
-| `config.prod.js` | Production profile — canonical reference for deployed backend URL. |
-| `app.js` | Form handling, fetch with 30s AbortController timeout, error classification, result card rendering, local-only "Mark as Used" toggle. |
+| `config.js` | Production API URL — loaded when hosted on Firebase. |
+| `app.js` | Hostname-based local/prod routing, fetch with 30s timeout, error classification, result rendering, local-only "Mark as Used" toggle. |
 
 **Client behavior highlights:**
 
-- Reads `API_URL` and `ENV` from `window.RFP_MATCH_CONFIG` (fallback: local dev URL).
+- On `localhost` / `file://`, auto-targets the local backend; on Firebase, uses `config.js`.
 - On transient failures (503, 502, timeout), keeps previous results visible while showing the error banner.
 - Renders top 3 matches with rank, category badge, decision label, similarity bar, owner, dates, and stale warning.
 
@@ -339,8 +336,6 @@ RFPProject/
 ├── render.yaml                  # Render backend deployment blueprint
 ├── firebase.json                # Firebase Hosting config (cache headers, rewrites)
 ├── .firebaserc                  # Firebase project mapping
-├── scripts/
-│   └── Set-FrontendApiUrl.ps1   # Switch frontend config.js between dev/prod/custom
 ├── backend/
 │   ├── main.py                  # FastAPI app — endpoints, CORS, startup
 │   ├── embedder.py              # Embedding engine, similarity, tiering, staleness
@@ -358,9 +353,7 @@ RFPProject/
 │       └── eval_set.json        # 50 labeled evaluation cases
 ├── frontend/
 │   ├── index.html
-│   ├── config.js                # Active API config (loaded at runtime)
-│   ├── config.dev.js            # Dev profile (excluded from Firebase deploy)
-│   ├── config.prod.js           # Prod profile (excluded from Firebase deploy)
+│   ├── config.js                # Production API config
 │   ├── app.js
 │   └── style.css
 └── docs/

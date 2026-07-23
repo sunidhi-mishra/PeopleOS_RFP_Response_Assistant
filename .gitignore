@@ -2,8 +2,11 @@
 .env
 backend/.env
 
-# Documentation folder
-#docs/
+# Firebase local cache
+.firebase/
+
+# Editor settings
+.vscode/
 
 # Python cache & temporary files
 __pycache__/
