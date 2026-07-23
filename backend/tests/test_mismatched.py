@@ -1,3 +1,14 @@
+"""
+Mismatched / adversarial query test — runs 12 deliberately wrong or unrelated
+queries directly through the embedder to validate the low-confidence floor.
+
+This script runs against the embedder locally (no HTTP). It requires a valid
+GEMINI_API_KEY in backend/.env (or the environment).
+
+Usage:
+    python tests/test_mismatched.py
+"""
+
 import os
 import sys
 import google.generativeai as genai

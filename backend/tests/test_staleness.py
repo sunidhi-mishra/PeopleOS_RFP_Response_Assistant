@@ -1,3 +1,13 @@
+"""
+Staleness logic test — reads knowledge_base.json directly and prints the
+is_stale evaluation for every entry against today's date.
+
+This script requires no network connection and no API key.
+
+Usage:
+    python tests/test_staleness.py
+"""
+
 import json
 import os
 from datetime import date

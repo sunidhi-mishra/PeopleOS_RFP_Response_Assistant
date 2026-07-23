@@ -1,9 +1,22 @@
+"""
+RFP Match Evaluation Suite — 50 labeled test cases across 5 categories.
+
+Usage:
+    python tests/run_evals.py              # runs against deployed backend
+    python tests/run_evals.py --local      # runs against http://127.0.0.1:8000
+    TEST_BASE_URL=http://... python tests/run_evals.py
+"""
+
 import json
 import os
+import sys
 import urllib.request
 import urllib.error
 
-URL = "https://peopleos-rfp-response-assistant.onrender.com/match"
+# Allow running from repo root or from inside tests/
+sys.path.insert(0, os.path.dirname(__file__))
+from config import get_base_url
+
 
 def check_tier_match(expected, actual_tier, actual_label):
     if expected == "High / Auto-Answer":
@@ -16,16 +29,18 @@ def check_tier_match(expected, actual_tier, actual_label):
         return actual_tier in ["Medium", "Low"] or actual_label in ["Review Required", "Escalate to SME"]
     return False
 
-def run_evaluation():
+
+def run_evaluation(base_url: str):
+    match_url = f"{base_url}/match"
     eval_set_path = os.path.join(os.path.dirname(__file__), "eval_set.json")
+
     with open(eval_set_path, "r", encoding="utf-8") as f:
         eval_cases = json.load(f)
 
-    # Initialize stats per category
     categories = ["true_match", "false_positive_risk", "unrelated", "multi_part", "negative_framing"]
     stats = {cat: {"total": 0, "correct_id": 0, "correct_tier": 0, "landed_in_high": 0} for cat in categories}
 
-    print("Starting RFP Match Evaluation Suite...")
+    print(f"Starting RFP Match Evaluation Suite against: {match_url}")
     print(f"Loaded {len(eval_cases)} test cases.\n")
 
     for idx, case in enumerate(eval_cases):
@@ -34,21 +49,20 @@ def run_evaluation():
         expected_match_id = case["expected_match_id"]
         expected_tier = case["expected_tier"]
 
-        # Call live match endpoint
         data = json.dumps({"question": query}).encode("utf-8")
         req = urllib.request.Request(
-            URL,
+            match_url,
             data=data,
             headers={"Content-Type": "application/json"},
             method="POST"
         )
-        
+
         actual_match_id = None
         actual_tier = "Low"
         actual_label = "Escalate to SME"
 
         try:
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req, timeout=30) as response:
                 res = json.loads(response.read().decode("utf-8"))
                 results = res.get("results", [])
                 if results:
@@ -57,53 +71,41 @@ def run_evaluation():
                     actual_tier = top.get("confidence_tier")
                     actual_label = top.get("decision_label")
         except urllib.error.URLError as e:
-            print(f"Error connecting to backend server: {str(e)}")
-            print("Please ensure the FastAPI backend is running at https://peopleos-rfp-response-assistant.onrender.com")
+            print(f"\nERROR: Could not reach backend at {match_url}")
+            print(f"Detail: {e}")
+            print("Tip: use --local to target http://127.0.0.1:8000, or set TEST_BASE_URL.")
             return
 
-        # Update stats
         stats[category]["total"] += 1
-        
-        # Landed in high/auto-answer check
+
         is_high = (actual_tier == "High" or actual_label == "Auto-Answer")
         if is_high:
             stats[category]["landed_in_high"] += 1
 
-        # Match ID comparison
-        if expected_match_id == "AMBIGUOUS":
-            # Ambiguous cases: do not score match ID correctness
-            id_ok = True
-        else:
-            id_ok = (actual_match_id == expected_match_id)
-            
+        id_ok = True if expected_match_id == "AMBIGUOUS" else (actual_match_id == expected_match_id)
         if id_ok:
             stats[category]["correct_id"] += 1
 
-        # Tier comparison
         tier_ok = check_tier_match(expected_tier, actual_tier, actual_label)
         if tier_ok:
             stats[category]["correct_tier"] += 1
 
-    # Print Category Scorecard
+    # Scorecard
     print("=" * 90)
     print(f"{'Category':<25} | {'Cases':<6} | {'ID Acc':<10} | {'Tier Acc':<10} | {'Landed in High/Auto-Answer':<28}")
     print("=" * 90)
-    
+
     for cat in categories:
         s = stats[cat]
         if s["total"] == 0:
             continue
-            
         id_acc = f"{(s['correct_id']/s['total'])*100:.1f}%" if cat != "multi_part" else "N/A"
         tier_acc = f"{(s['correct_tier']/s['total'])*100:.1f}%"
         high_pct = f"{(s['landed_in_high']/s['total'])*100:.1f}% ({s['landed_in_high']}/{s['total']})"
-        
         print(f"{cat:<25} | {s['total']:<6} | {id_acc:<10} | {tier_acc:<10} | {high_pct:<28}")
 
     print("=" * 90)
 
-    # Compute Critical Safety Metric
-    # Risk categories are everything EXCEPT true_match
     risk_total = sum(stats[cat]["total"] for cat in categories if cat != "true_match")
     risk_high = sum(stats[cat]["landed_in_high"] for cat in categories if cat != "true_match")
     risk_pct = (risk_high / risk_total) * 100 if risk_total > 0 else 0.0
@@ -112,5 +114,7 @@ def run_evaluation():
           f"{risk_high} out of {risk_total} ({risk_pct:.1f}%)")
     print("=" * 90)
 
+
 if __name__ == "__main__":
-    run_evaluation()
+    base_url = get_base_url()
+    run_evaluation(base_url)

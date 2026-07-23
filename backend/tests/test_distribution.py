@@ -1,3 +1,14 @@
+"""
+Similarity distribution test — runs 15 near-exact KB queries directly through the
+embedder and reports the score range for true matches.
+
+This script runs against the embedder locally (no HTTP). It requires a valid
+GEMINI_API_KEY in backend/.env (or the environment).
+
+Usage:
+    python tests/test_distribution.py
+"""
+
 import os
 import sys
 import google.generativeai as genai
