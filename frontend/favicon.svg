@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded card background -->
+  <rect width="32" height="32" rx="8" fill="url(#bgGrad)" />
+  
+  <!-- Stylized "P" for PeopleOS -->
+  <path d="M9 8h7.5a4.5 4.5 0 0 1 0 9H11.5v7H9V8zm2.5 2.5v4h5a2 2 0 1 0 0-4h-5z" fill="#ffffff" />
+  
+  <!-- An overlapping checkmark or match node representing 'RFP Match' / Success -->
+  <circle cx="21" cy="20" r="3.5" fill="#10b981" stroke="#ffffff" stroke-width="1.5" />
+</svg>
