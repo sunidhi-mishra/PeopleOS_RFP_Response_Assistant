@@ -9,19 +9,43 @@ load_dotenv()
 
 from embedder import RFMEmbedder
 
-app = FastAPI(title="RFP Match Backend POC")
+# ---------------------------------------------------------------------------
+# Environment configuration
+# APP_ENV:      "production" | "development"  (default: "production")
+# FRONTEND_URL: override the allowed CORS origin for the frontend
+#               (default: Firebase hosting URL in prod, localhost in dev)
+# ---------------------------------------------------------------------------
+APP_ENV = os.getenv("APP_ENV", "production").lower()
 
-# CORS middleware configuration
-# Explicitly allow the Firebase-hosted frontend and localhost for local development
-allowed_origins = [
+_PROD_ORIGINS = [
     "https://rfpresponseassistant.web.app",
     "https://rfpresponseassistant.firebaseapp.com",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
+]
+_DEV_ORIGINS = [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
+# Allow an explicit override via FRONTEND_URL for custom deployments
+_extra = os.getenv("FRONTEND_URL")
+
+if APP_ENV == "development":
+    allowed_origins = _DEV_ORIGINS + _PROD_ORIGINS
+else:
+    allowed_origins = _PROD_ORIGINS
+
+if _extra and _extra not in allowed_origins:
+    allowed_origins.append(_extra)
+
+print(f"[config] APP_ENV={APP_ENV} | allowed_origins={allowed_origins}")
+
+app = FastAPI(title="RFP Match Backend POC")
+
+# CORS middleware — origins driven by APP_ENV / FRONTEND_URL env vars
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -50,7 +74,7 @@ def startup_event():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "env": APP_ENV}
 
 @app.post("/match")
 def match_rfp(request: MatchRequest):

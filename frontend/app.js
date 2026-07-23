@@ -1,4 +1,7 @@
 const API_URL = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.API_URL) || "http://127.0.0.1:8000/match";
+const APP_ENV = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.ENV) || "development";
+
+console.log(`[RFP Match] env=${APP_ENV} api=${API_URL}`);
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("rfp-form");
