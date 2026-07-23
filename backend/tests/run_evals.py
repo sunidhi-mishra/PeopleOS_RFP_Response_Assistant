@@ -3,7 +3,7 @@ import os
 import urllib.request
 import urllib.error
 
-URL = "http://127.0.0.1:8000/match"
+URL = "https://peopleos-rfp-response-assistant.onrender.com/match"
 
 def check_tier_match(expected, actual_tier, actual_label):
     if expected == "High / Auto-Answer":
@@ -58,7 +58,7 @@ def run_evaluation():
                     actual_label = top.get("decision_label")
         except urllib.error.URLError as e:
             print(f"Error connecting to backend server: {str(e)}")
-            print("Please ensure the FastAPI backend is running on http://127.0.0.1:8000")
+            print("Please ensure the FastAPI backend is running at https://peopleos-rfp-response-assistant.onrender.com")
             return
 
         # Update stats

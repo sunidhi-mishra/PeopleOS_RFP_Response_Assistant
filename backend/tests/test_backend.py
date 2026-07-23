@@ -1,7 +1,7 @@
 import urllib.request
 import json
 
-URL = "http://127.0.0.1:8000/match"
+URL = "https://peopleos-rfp-response-assistant.onrender.com/match"
 QUESTIONS = [
     "Do you have SOC 2 certification?",
     "What payroll systems do you integrate with?",

@@ -99,14 +99,14 @@ Open `frontend/index.html` in a browser, or serve it locally. The browser loads 
 To update the frontend API target from PowerShell:
 
 ```powershell
-./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://your-backend.onrender.com/match"
+./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://peopleos-rfp-response-assistant.onrender.com/match"
 ```
 
 ### Deploying the full stack
 
-1. Deploy the backend to Render using `render.yaml`.
-2. Set `GEMINI_API_KEY` in the Render service environment.
-3. Run `./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://your-backend.onrender.com/match"`.
+1. The backend is deployed on Render at `https://peopleos-rfp-response-assistant.onrender.com`.
+2. Confirm `GEMINI_API_KEY` is set in the Render service environment.
+3. Run `./scripts/Set-FrontendApiUrl.ps1 -ApiUrl "https://peopleos-rfp-response-assistant.onrender.com/match"`.
 4. Deploy the frontend to Firebase Hosting.
 5. Verify `GET /health` on the backend and then test the browser flow from the Firebase-hosted frontend.
 
