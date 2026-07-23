@@ -19,7 +19,7 @@ It is not a full RFP management platform. It is a narrow, working test of one me
 ## What It Does
 
 1. A Sales Engineer pastes an incoming RFP question into the tool.
-2. The system embeds the question and compares it against a knowledge base of 30 pre-written PeopleOS answers using semantic similarity (cosine similarity over Gemini `text-embedding-004` vectors).
+2. The system embeds the question and compares it against a knowledge base of 30 pre-written PeopleOS **answers** (not questions) using cosine similarity over Gemini embedding vectors.
 3. The top 3 matches are returned, each with:
    - A similarity score
    - A confidence tier: **Auto-Answer** (≥ 0.85), **Review Required** (0.60–0.84), or **Escalate to SME** (< 0.60)
@@ -29,21 +29,32 @@ It is not a full RFP management platform. It is a narrow, working test of one me
 
 ## Architecture
 
+The app is a decoupled static frontend + Python API with no database or build pipeline.
+
 ```
-Browser (Firebase Hosting)
+Browser (Firebase Hosting — rfpresponseassistant.web.app)
+        │  loads config.js → window.RFP_MATCH_CONFIG.API_URL
         │  POST /match  {question: "..."}
         ▼
-FastAPI backend (Render)
+FastAPI backend (Render — peopleos-rfp-response-assistant.onrender.com)
         │
-        ├── APP_ENV controls CORS origin list and logging
-        ├── Embeds incoming query via Gemini text-embedding-004
-        ├── Compares against 30 pre-cached knowledge base embeddings (cosine similarity)
-        ├── Classifies result into confidence tier and decision label
-        ├── Applies staleness check (independent of similarity score)
-        └── Returns top 3 ranked matches as JSON
+        ├── APP_ENV + FRONTEND_URL control CORS (production Firebase origins by default)
+        ├── Startup: batch-embed all 30 KB answers (task_type=retrieval_document), cache in memory
+        ├── Per request: embed query (task_type=retrieval_query) via Gemini
+        ├── Cosine similarity against cached answer vectors (NumPy)
+        ├── Classify into confidence tier and decision label (fixed thresholds)
+        ├── Apply staleness check (review_due vs today, independent of score)
+        └── Return top 3 ranked matches as JSON
 ```
 
-**Stack:** Python 3, FastAPI, Uvicorn, Google Gemini Embeddings API (`text-embedding-004`), NumPy, vanilla HTML/CSS/JS, Firebase Hosting, Render.
+| Layer | Technology | Hosting |
+|---|---|---|
+| Frontend | Vanilla HTML/CSS/JS | Firebase Hosting |
+| Backend | Python 3, FastAPI, Uvicorn | Render (`render.yaml`) |
+| Embeddings | Google Gemini (`text-embedding-004` with model fallback) | Google AI API |
+| Data | Static JSON (`knowledge_base.json`) | Bundled with backend |
+
+Full component diagrams, sequence flows, and deployment topology: [`docs/architecture.md`](./docs/architecture.md).
 
 ---
 
@@ -61,7 +72,7 @@ Returns service status. Use this to verify a deploy succeeded before testing the
 }
 ```
 
-`embedder_ready: false` means the backend started but failed to initialise the embedding engine — check the Render logs for the specific cause (missing API key, Gemini outage, malformed knowledge base).
+`embedder_ready: false` means the backend started but failed to initialise the embedding engine — check the Render logs for the specific cause (missing API key, Gemini outage, malformed knowledge base). The server stays alive in this degraded state so `/health` remains reachable for diagnostics.
 
 ### `POST /match`
 
@@ -166,7 +177,7 @@ curl http://127.0.0.1:8000/health
 
 ### Frontend
 
-Switch `config.js` to the development profile before opening locally:
+The frontend reads its API URL from `frontend/config.js` (via `window.RFP_MATCH_CONFIG`). Switch to the development profile before opening locally:
 
 ```powershell
 # Point the frontend at the local backend (http://127.0.0.1:8000)
@@ -215,47 +226,33 @@ TEST_BASE_URL=https://staging-backend.onrender.com py backend/tests/run_evals.py
 
 ## Deploying
 
-### Backend (Render)
+| Component | Platform | Production URL |
+|---|---|---|
+| Backend | Render (`render.yaml`) | https://peopleos-rfp-response-assistant.onrender.com |
+| Frontend | Firebase Hosting | https://rfpresponseassistant.web.app |
 
-The backend is deployed at `https://peopleos-rfp-response-assistant.onrender.com` via `render.yaml`.
+**Quick release:**
 
-1. Push changes to the connected git branch — Render auto-deploys on push.
-2. Confirm these environment variables are set in the Render dashboard:
-   - `GEMINI_API_KEY` — your Gemini API key (never commit this value)
-   - `APP_ENV` — set to `production` (already declared in `render.yaml`)
-3. Verify the deploy succeeded:
-   ```bash
-   curl https://peopleos-rfp-response-assistant.onrender.com/health
-   # {"status":"ok","env":"production","embedder_ready":true}
-   ```
-   If `embedder_ready` is `false`, check the Render service logs for the startup failure reason.
+```bash
+# 1. Backend — push to the Render-connected branch (auto-deploys)
+git push origin main
 
-> **Note on cold starts:** Render's free tier spins down inactive services. The first request after inactivity may take 30–60 seconds while the service wakes up and re-embeds the knowledge base. The frontend handles this with a 30-second timeout and a user-facing retry message.
+# 2. Verify backend
+curl https://peopleos-rfp-response-assistant.onrender.com/health
 
-### Frontend (Firebase Hosting)
-
-The frontend is deployed at `https://rfpresponseassistant.web.app` via Firebase Hosting.
-
-```powershell
-# 1. Ensure config.js points at the production backend
+# 3. Frontend — set prod config and deploy
 ./scripts/Set-FrontendApiUrl.ps1 -Env prod
-
-# 2. Deploy
 firebase deploy --only hosting
 ```
 
-**What the Firebase config does:**
-- Serves the `frontend/` directory
-- Excludes `config.dev.js` and `config.prod.js` from the hosted build
-- `index.html` and `config.js` are served with `no-cache` headers — changes are live immediately after each deploy
-- `app.js` and `style.css` are served with `immutable` cache headers — safe to cache permanently since Firebase fingerprints them on deploy
+Full workflow — environment variables, verification, staging, troubleshooting, and the complete release checklist: **[`docs/deployment.md`](./docs/deployment.md)**.
 
 ---
 
 ## Project Structure
 
 ```
-rfp-match-poc/
+RFPProject/
 ├── backend/
 │   ├── main.py                  # FastAPI app — /health and /match endpoints, CORS, env config
 │   ├── embedder.py              # Embedding engine — Gemini calls, cosine similarity,
@@ -284,16 +281,22 @@ rfp-match-poc/
 ├── render.yaml                  # Render deployment blueprint — build/start commands, env vars
 ├── firebase.json                # Firebase Hosting config — cache headers, ignore rules, rewrite
 ├── .firebaserc                  # Firebase project mapping
-└── docs/                        # PM documentation — problem framing, decisions, gap analysis
+└── docs/                        # Architecture spec, PM documentation, gap analysis
+    ├── architecture.md          # System architecture and component design
+    ├── deployment.md            # Deployment workflow, env vars, release checklist
+    ├── edgecase.md
+    ├── phaseWiseImplementationPlan.md
+    └── problemstatement.txt
 ```
 
 ---
 
 ## Documentation
 
-The `/docs` folder contains the PM thinking behind this build: problem framing, competitive landscape, user persona, the full confidence threshold calibration story (including the failures), and an honest gap analysis of what a production version would require.
+The `/docs` folder contains architecture specifications and PM thinking behind this build: problem framing, competitive landscape, user persona, the full confidence threshold calibration story (including the failures), and an honest gap analysis of what a production version would require.
 
-This documentation was written iteratively alongside the build — including decisions that did not go as planned and were kept rather than hidden.
+- [`docs/architecture.md`](./docs/architecture.md) — system design and data flows
+- [`docs/deployment.md`](./docs/deployment.md) — backend/frontend deployment, env vars, release steps
 
 ---
 
