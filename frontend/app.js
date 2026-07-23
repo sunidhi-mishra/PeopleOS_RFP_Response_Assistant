@@ -1,7 +1,37 @@
 const API_URL = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.API_URL) || "http://127.0.0.1:8000/match";
 const APP_ENV = (window.RFP_MATCH_CONFIG && window.RFP_MATCH_CONFIG.ENV) || "development";
 
+// Abort fetch after this many milliseconds (covers sleeping Render free-tier instances)
+const FETCH_TIMEOUT_MS = 30000;
+
 console.log(`[RFP Match] env=${APP_ENV} api=${API_URL}`);
+
+/**
+ * Returns a user-facing error message based on the failure type.
+ * Keeps messages actionable — the user should know what to do next.
+ */
+function classifyError(error, httpStatus) {
+    if (error.name === "AbortError") {
+        return "The request timed out — the backend may be waking up after inactivity. Wait a few seconds and try again.";
+    }
+    if (httpStatus === 400) {
+        return "Your question was empty or invalid. Please enter a question and try again.";
+    }
+    if (httpStatus === 503) {
+        return "The matching service is temporarily unavailable (Gemini API may be starting up). Please try again in a moment.";
+    }
+    if (httpStatus === 502) {
+        return "The matching service encountered an upstream API error. Please try again in a moment.";
+    }
+    if (httpStatus === 500) {
+        return "An unexpected error occurred on the server. Please try again or contact support if the problem persists.";
+    }
+    if (httpStatus) {
+        return `The server returned an unexpected response (status ${httpStatus}). Please try again.`;
+    }
+    // Network-level failure (no HTTP status — CORS, DNS, refused connection)
+    return "Could not reach the matching service. Check your connection or try again in a moment.";
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("rfp-form");
@@ -18,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         const question = questionInput.value.trim();
         if (!question) return;
 
@@ -26,37 +56,54 @@ document.addEventListener("DOMContentLoaded", () => {
         submitBtn.disabled = true;
         btnText.textContent = "Finding Matches...";
         spinner.classList.remove("hidden");
-        
-        // Hide only empty state & error state, keeping previous matches list visible to avoid flickering
+
+        // Hide empty/error states — keep previous results visible to avoid flicker
         emptyState.classList.add("hidden");
         errorState.classList.add("hidden");
+
+        // Set up a timeout so a sleeping Render instance doesn't hang the UI forever
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+        let httpStatus = null;
 
         try {
             const response = await fetch(API_URL, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ question })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question }),
+                signal: controller.signal,
             });
 
+            httpStatus = response.status;
+
             if (!response.ok) {
+                // Try to extract the server's detail message for logging
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || `Server returned status ${response.status}`);
+                const serverDetail = errorData.detail || "";
+                console.error(`[RFP Match] HTTP ${httpStatus}:`, serverDetail);
+                throw new Error(serverDetail || `HTTP ${httpStatus}`);
             }
 
             const data = await response.json();
             renderResults(data.results);
-            
+
         } catch (error) {
-            console.error("Fetch error:", error);
-            // If there's an error, hide results and show error state
-            matchesList.classList.add("hidden");
-            infoBox.classList.add("hidden");
+            console.error("[RFP Match] fetch error:", error);
+
+            // On a transient server error (503/502), keep previous results visible
+            // so the user still has something to work with while retrying.
+            const isTransient = httpStatus === 503 || httpStatus === 502 || error.name === "AbortError";
+            if (!isTransient) {
+                matchesList.classList.add("hidden");
+                infoBox.classList.add("hidden");
+            }
+
             errorState.classList.remove("hidden");
-            errorMessage.textContent = "Could not connect to the matching service. Please ensure the backend is running.";
+            errorMessage.textContent = classifyError(error, httpStatus);
+
         } finally {
-            // Exit loading state
+            clearTimeout(timeoutId);
             submitBtn.disabled = false;
             btnText.textContent = "Find Matches";
             spinner.classList.add("hidden");

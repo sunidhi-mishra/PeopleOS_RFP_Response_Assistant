@@ -68,32 +68,74 @@ def startup_event():
         print("Initializing embedder and caching knowledge base embeddings...")
         embedder = RFMEmbedder(kb_path)
         print("Embedder initialization complete.")
+    except FileNotFoundError as e:
+        print(f"[startup] FAILED — knowledge base not found: {e}")
+    except ValueError as e:
+        print(f"[startup] FAILED — configuration or data error: {e}")
+    except RuntimeError as e:
+        print(f"[startup] FAILED — Gemini API error: {e}")
     except Exception as e:
-        print(f"Error during initialization: {str(e)}")
-        # We don't crash the server start immediately to allow diagnostics, but future requests will fail if embedder is None
+        print(f"[startup] FAILED — unexpected error ({type(e).__name__}): {e}")
+    # Server stays alive so /health remains reachable for diagnostics.
+    # All /match requests will return 503 until embedder is not None.
+
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "env": APP_ENV}
+    return {
+        "status": "ok",
+        "env": APP_ENV,
+        "embedder_ready": embedder is not None,
+    }
+
 
 @app.post("/match")
 def match_rfp(request: MatchRequest):
     global embedder
+
     if embedder is None:
         raise HTTPException(
             status_code=503,
-            detail="Embedding matching engine is not initialized. Please verify your GEMINI_API_KEY."
+            detail=(
+                "The matching engine failed to initialise at startup. "
+                "This is usually caused by a missing or invalid GEMINI_API_KEY, "
+                "or a transient Gemini API failure. Check the server logs for details."
+            ),
         )
-        
+
     query = request.question.strip()
     if not query:
-        raise HTTPException(status_code=400, detail="Question cannot be empty or whitespace.")
-        
+        raise HTTPException(
+            status_code=400,
+            detail="Question cannot be empty or whitespace.",
+        )
+
     try:
         results = embedder.find_matches(query, top_k=3)
-        return {
-            "query": request.question,
-            "results": results
-        }
+        return {"query": request.question, "results": results}
+
+    except RuntimeError as e:
+        error_str = str(e).lower()
+        # Surface transient Gemini failures as 503 so the client knows to retry
+        if any(p in error_str for p in ("timeout", "temporarily unavailable", "rate limit",
+                                         "quota", "try again")):
+            raise HTTPException(
+                status_code=503,
+                detail=f"The Gemini API is temporarily unavailable. Please try again in a moment. Detail: {e}",
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Upstream API error while processing your query. Detail: {e}",
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal configuration error: {e}",
+        )
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Similarity matching error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error during matching ({type(e).__name__}): {e}",
+        )
