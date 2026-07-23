@@ -1,18 +1,28 @@
-# RFP Match — A Confidence-Calibrated Retrieval Prototype
+# RFP Match - A Confidence-Calibrated Retrieval Prototype
 
-**Live demo:** https://rfpresponseassistant.web.app/
+<p align="left">
+  <a href="https://rfpresponseassistant.web.app/" target="_blank">
+    <img src="https://img.shields.io/badge/Live_Prototype-Active-brightgreen?style=for-the-badge&logo=firebase&logoColor=white" alt="Live Demo" />
+  </a>
+  <a href="https://rfp-match-prd.vercel.app/">
+    <img src="https://img.shields.io/badge/PRD_Link-Read_PRD-blue?style=for-the-badge&logo=markdown&logoColor=white" alt="PRD" />
+  </a>
+  <a href="./supporting_docs/case_study.md">
+    <img src="https://img.shields.io/badge/Case_Study-Read_Case_Study-orange?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Case Study" />
+  </a>
+</p>
 
-A proof-of-concept tool that helps Sales Engineers find pre-written answers to incoming RFP (Request for Proposal) questions, using semantic search with an explicit confidence-based decision gate — built for a fictional HR Tech SaaS company, **PeopleOS**.
+A proof-of-concept tool that helps Sales Engineers find pre-written answers to incoming RFP (Request for Proposal) questions, using semantic search with an explicit confidence-based decision gate, built for a fictional HR Tech SaaS company, **PeopleOS**.
 
 ---
 
 ## Why This Exists
 
-RFP response is one of the most time-consuming recurring tasks for B2B sales engineering teams. Enterprise buyers send 50–150 question RFPs, and most of those questions have already been answered before — somewhere in a Google Drive folder, an old email thread, or a Slack message nobody can find again.
+RFP response is one of the most time-consuming recurring tasks for B2B sales engineering teams. Enterprise buyers send 50-150 question RFPs, and most of those questions have already been answered before, somewhere in a Google Drive folder, an old email thread, or a Slack message nobody can find again.
 
 This prototype tests one specific hypothesis: **the bottleneck in RFP response is retrieval, not generation.** If you can reliably surface an existing, verified answer with an honest confidence signal, you eliminate the search time without introducing hallucination risk.
 
-It is not a full RFP management platform. It is a narrow, working test of one mechanism — semantic retrieval with a category-aware, empirically validated confidence gate — that none of the established players in this space (Loopio, Responsive, Ombud, QorusDocs) currently implement explicitly.
+It is not a full RFP management platform. It is a narrow, working test of one mechanism: semantic retrieval with a category-aware, empirically validated confidence gate that none of the established players in this space (Loopio, Responsive, Ombud, QorusDocs) currently implement explicitly.
 
 ---
 
@@ -23,7 +33,7 @@ It is not a full RFP management platform. It is a narrow, working test of one me
 3. The top 3 matches are returned, each with:
    - A similarity score
    - A confidence tier: **Auto-Answer** (≥ 0.85), **Review Required** (0.60–0.84), or **Escalate to SME** (< 0.60)
-   - A staleness flag — calculated independently of the confidence score. A high-confidence match can still be flagged as outdated if it has passed its `review_due` date.
+   - A staleness flag: calculated independently of the confidence score. A high-confidence match can still be flagged as outdated if it has passed its `review_due` date.
 
 ---
 
@@ -32,11 +42,11 @@ It is not a full RFP management platform. It is a narrow, working test of one me
 The app is a decoupled static frontend + Python API with no database or build pipeline.
 
 ```
-Browser (Firebase Hosting — rfpresponseassistant.web.app)
+Browser (Firebase Hosting - rfpresponseassistant.web.app)
         │  loads config.js → window.RFP_MATCH_CONFIG.API_URL
         │  POST /match  {question: "..."}
         ▼
-FastAPI backend (Render — peopleos-rfp-response-assistant.onrender.com)
+FastAPI backend (Render - peopleos-rfp-response-assistant.onrender.com)
         │
         ├── APP_ENV + FRONTEND_URL control CORS (production Firebase origins by default)
         ├── Startup: batch-embed all 30 KB answers (task_type=retrieval_document), cache in memory
@@ -54,7 +64,7 @@ FastAPI backend (Render — peopleos-rfp-response-assistant.onrender.com)
 | Embeddings | Google Gemini (`text-embedding-004` with model fallback) | Google AI API |
 | Data | Static JSON (`knowledge_base.json`) | Bundled with backend |
 
-Full component diagrams, sequence flows, and deployment topology: [`docs/architecture.md`](./docs/architecture.md).
+Full component diagrams, sequence flows, and deployment topology: [`project_docs/architecture.md`](./project_docs/architecture.md).
 
 ---
 
@@ -72,7 +82,7 @@ Returns service status. Use this to verify a deploy succeeded before testing the
 }
 ```
 
-`embedder_ready: false` means the backend started but failed to initialise the embedding engine — check the Render logs for the specific cause (missing API key, Gemini outage, malformed knowledge base). The server stays alive in this degraded state so `/health` remains reachable for diagnostics.
+`embedder_ready: false` means the backend started but failed to initialise the embedding engine; check the Render logs for the specific cause (missing API key, Gemini outage, malformed knowledge base). The server stays alive in this degraded state so `/health` remains reachable for diagnostics.
 
 ### `POST /match`
 
@@ -118,21 +128,21 @@ Returns service status. Use this to verify a deploy succeeded before testing the
 
 ## Key Decision: Confidence Threshold Calibration
 
-The most important design decision in this project was not the retrieval mechanism — it was **where to draw the line between "auto-answer" and "needs human review."**
+The most important design decision in this project was not the retrieval mechanism; it was **where to draw the line between "auto-answer" and "needs human review."**
 
 The threshold was not set from intuition. It was calibrated against real data:
 
 - A distribution test of 15 verified true matches showed scores clustering between **0.77 and 0.90**.
-- A second test of 12 deliberately adversarial queries (topically similar but factually wrong — e.g. asking about Salesforce integration when only Workday/SAP are supported) showed false matches scoring as high as **0.81**.
+- A second test of 12 deliberately adversarial queries (topically similar but factually wrong, e.g. asking about Salesforce integration when only Workday/SAP are supported) showed false matches scoring as high as **0.81**.
 - These two ranges **overlap**. There is no single threshold value that perfectly separates true matches from false matches in this overlap zone.
 
-**Decision:** Keep the Auto-Answer threshold at **0.85** — above the highest observed false match — accepting that roughly 70% of genuinely correct answers will land in "Review Required" rather than "Auto-Answer."
+**Decision:** Keep the Auto-Answer threshold at **0.85** (above the highest observed false match), accepting that roughly 70% of genuinely correct answers will land in "Review Required" rather than "Auto-Answer."
 
-**Why:** The cost of a false positive (a confidently wrong answer sent to an enterprise prospect with no human review) is categorically higher than the cost of a false negative (a correct answer requiring a few seconds of human confirmation). When those costs are asymmetric, the threshold should be set to protect against the worse outcome — not to maximize convenience.
+**Why:** The cost of a false positive (a confidently wrong answer sent to an enterprise prospect with no human review) is categorically higher than the cost of a false negative (a correct answer requiring a few seconds of human confirmation). When those costs are asymmetric, the threshold should be set to protect against the worse outcome, not to maximize convenience.
 
 This was validated with a 50-case labeled evaluation suite (`backend/tests/eval_set.json`) spanning true matches, adversarial false-positive risks, unrelated queries, multi-part compound questions, and negatively-framed questions. Result: **0% false positives landed in the Auto-Answer tier** across all 34 risk-category test cases.
 
-Full reasoning, including the cases that did not go as expected and why they were not "fixed," is documented in [`/docs`](./docs).
+Full reasoning, including the cases that did not go as expected and why they were not "fixed," is documented in [`project_docs/`](./project_docs) and [`supporting_docs/`](./supporting_docs).
 
 ---
 
@@ -140,12 +150,12 @@ Full reasoning, including the cases that did not go as expected and why they wer
 
 This is a scoped POC, not a production system. Named limitations:
 
-- **No PDF intake.** Questions are typed or pasted as text. Real RFPs arrive as PDFs with inconsistent formatting — a separate, harder engineering problem.
+- **No PDF intake.** Questions are typed or pasted as text. Real RFPs arrive as PDFs with inconsistent formatting, which is a separate, harder engineering problem.
 - **No feedback loop.** Accepted or rejected matches are not used to improve future retrieval. In production, this loop is what makes the system improve over time.
-- **No capture mechanism for informal commitments.** The knowledge base only reflects formally documented answers — not verbal commitments made on sales calls.
+- **No capture mechanism for informal commitments.** The knowledge base only reflects formally documented answers, not verbal commitments made on sales calls.
 - **No multi-tenant architecture.** Single fictional company, single knowledge base.
 - **No production-grade data security.** Uses entirely synthetic data by design.
-- **Negation handling is weak.** Negatively-framed questions ("what do you NOT support?") are not reliably distinguished from their positive counterparts by similarity scoring alone — a confirmed, documented limitation of embedding-based retrieval, not a bug.
+- **Negation handling is weak.** Negatively-framed questions ("what do you NOT support?") are not reliably distinguished from their positive counterparts by similarity scoring alone. This is a confirmed, documented limitation of embedding-based retrieval, not a bug.
 
 ---
 
@@ -164,9 +174,9 @@ uvicorn main:app --reload
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `GEMINI_API_KEY` | Yes | — | Get from [aistudio.google.com](https://aistudio.google.com) |
+| `GEMINI_API_KEY` | Yes | - | Get from [aistudio.google.com](https://aistudio.google.com) |
 | `APP_ENV` | No | `production` | Set to `development` locally to allow localhost CORS origins |
-| `FRONTEND_URL` | No | — | Extra allowed CORS origin for staging deployments |
+| `FRONTEND_URL` | No | - | Extra allowed CORS origin for staging deployments |
 
 Verify it started correctly:
 
@@ -221,17 +231,17 @@ TEST_BASE_URL=https://staging-backend.onrender.com py backend/tests/run_evals.py
 **Quick release:**
 
 ```bash
-# 1. Backend — push to the Render-connected branch (auto-deploys)
+# 1. Backend: push to the Render-connected branch (auto-deploys)
 git push origin main
 
 # 2. Verify backend
 curl https://peopleos-rfp-response-assistant.onrender.com/health
 
-# 3. Frontend — deploy
+# 3. Frontend: deploy
 firebase deploy --only hosting
 ```
 
-Full workflow — environment variables, verification, staging, troubleshooting, and the complete release checklist: **[`docs/deployment.md`](./docs/deployment.md)**.
+Full workflow: environment variables, verification, staging, troubleshooting, and the complete release checklist: **[`project_docs/deployment.md`](./project_docs/deployment.md)**.
 
 ---
 
@@ -240,16 +250,16 @@ Full workflow — environment variables, verification, staging, troubleshooting,
 ```
 RFPProject/
 ├── backend/
-│   ├── main.py                  # FastAPI app — /health and /match endpoints, CORS, env config
-│   ├── embedder.py              # Embedding engine — Gemini calls, cosine similarity,
+│   ├── main.py                  # FastAPI app: /health and /match endpoints, CORS, env config
+│   ├── embedder.py              # Embedding engine: Gemini calls, cosine similarity,
 │   │                            #   confidence tiering, staleness logic, error handling
 │   ├── knowledge_base.json      # 30 Q&A pairs across 6 categories
-│   ├── update_kb_dates.py       # Maintenance script — refreshes review_due dates
-│   ├── .env.template            # Copy to .env and fill in values — never commit .env
+│   ├── update_kb_dates.py       # Maintenance script: refreshes review_due dates
+│   ├── .env.template            # Copy to .env and fill in values (never commit .env)
 │   ├── requirements.txt
 │   └── tests/
-│       ├── config.py            # Shared URL resolver — --local flag / TEST_BASE_URL env var
-│       ├── test_backend.py      # HTTP smoke test — /health + 5 sample /match queries
+│       ├── config.py            # Shared URL resolver: --local flag / TEST_BASE_URL env var
+│       ├── test_backend.py      # HTTP smoke test: /health + 5 sample /match queries
 │       ├── test_distribution.py # Similarity score distribution across 15 true-match queries
 │       ├── test_mismatched.py   # Adversarial / unrelated query distribution test
 │       ├── test_staleness.py    # Staleness logic verification (no network required)
@@ -259,26 +269,50 @@ RFPProject/
 │   ├── index.html               # Single-page UI
 │   ├── config.js                # Production API config (used when hosted on Firebase)
 │   ├── style.css                # All styling and responsive layout
-│   └── app.js                   # Fetch logic, hostname-based local/prod routing, result rendering
-├── render.yaml                  # Render deployment blueprint — build/start commands, env vars
-├── firebase.json                # Firebase Hosting config — cache headers, ignore rules, rewrite
+│   ├── app.js                   # Fetch logic, hostname-based local/prod routing, result rendering
+│   └── favicon.svg              # App icon / favicon
+├── render.yaml                  # Render deployment blueprint: build/start commands, env vars
+├── firebase.json                # Firebase Hosting config: cache headers, ignore rules, rewrite
 ├── .firebaserc                  # Firebase project mapping
-└── docs/                        # Architecture spec, PM documentation, gap analysis
-    ├── architecture.md          # System architecture and component design
-    ├── deployment.md            # Deployment workflow, env vars, release checklist
-    ├── edgecase.md
-    ├── phaseWiseImplementationPlan.md
-    └── problemstatement.txt
+├── project_docs/                # Project plans, specs, deployment docs
+│   ├── architecture.md          # System architecture and component design
+│   ├── deployment.md            # Deployment workflow, env vars, release checklist
+│   ├── edgecase.md              # Edge cases analysis (e.g., negative queries)
+│   ├── phaseWiseImplementationPlan.md # Phased implementation schedule
+│   └── problemstatement.txt     # Original challenge description
+└── supporting_docs/             # Detailed product requirements, PM research, and analyses
+    ├── PRD.md                   # Product Requirements Document
+    ├── Problem_research_document.md # Problem space and pain points study
+    ├── User_persona.md          # User personas (Sales Engineer, SME)
+    ├── Competitive_landscape.md # Differentiators vs Loopio, Responsive, etc.
+    ├── Confidence_Threshold_and_Evaluation_Framework.md # Calibrations & math
+    ├── Eval_design_rationale.md # Testing/evaluation strategy
+    ├── Production_gap_analysis.md # Missing features for v1.0 production
+    └── case_study.md            # Validation results & deployment case study
 ```
 
 ---
 
 ## Documentation
 
-The `/docs` folder contains architecture specifications and PM thinking behind this build: problem framing, competitive landscape, user persona, the full confidence threshold calibration story (including the failures), and an honest gap analysis of what a production version would require.
+Detailed documentation is organized into two directories: `project_docs/` (technical specs, plans, deployment logs) and `supporting_docs/` (PM research, PRD, frameworks, user personas).
 
-- [`docs/architecture.md`](./docs/architecture.md) — system design and data flows
-- [`docs/deployment.md`](./docs/deployment.md) — backend/frontend deployment, env vars, release steps
+### Project & Technical Documentation (`project_docs/`)
+- [`project_docs/architecture.md`](./project_docs/architecture.md) - System architecture, sequence flows, and component design
+- [`project_docs/deployment.md`](./project_docs/deployment.md) - Environment variables, local/production run steps, and release checklist
+- [`project_docs/edgecase.md`](./project_docs/edgecase.md) - Analysis of tricky edge cases (e.g., negative queries, formatting anomalies)
+- [`project_docs/phaseWiseImplementationPlan.md`](./project_docs/phaseWiseImplementationPlan.md) - Step-by-step phased execution plan
+- [`project_docs/problemstatement.txt`](./project_docs/problemstatement.txt) - Original challenge scope and design parameters
+
+### Product & Strategy Documentation (`supporting_docs/`)
+- [`supporting_docs/PRD.md`](./supporting_docs/PRD.md) - Product Requirements Document (PRD) for PeopleOS RFP Assistant
+- [`supporting_docs/Problem_research_document.md`](./supporting_docs/Problem_research_document.md) - Detailed problem space exploration and user pain points
+- [`supporting_docs/User_persona.md`](./supporting_docs/User_persona.md) - Detailed profiles of targeted users (Sales Engineers, SMEs)
+- [`supporting_docs/Competitive_landscape.md`](./supporting_docs/Competitive_landscape.md) - Review of existing RFP platforms and our unique differentiator
+- [`supporting_docs/Confidence_Threshold_and_Evaluation_Framework.md`](./supporting_docs/Confidence_Threshold_and_Evaluation_Framework.md) - Research and math behind the confidence gates
+- [`supporting_docs/Eval_design_rationale.md`](./supporting_docs/Eval_design_rationale.md) - Reasoning behind evaluation set metrics and test coverage
+- [`supporting_docs/Production_gap_analysis.md`](./supporting_docs/Production_gap_analysis.md) - What is missing from the prototype to make it production-ready
+- [`supporting_docs/case_study.md`](./supporting_docs/case_study.md) - Explanatory case study on deployment and validation outcomes
 
 ---
 
