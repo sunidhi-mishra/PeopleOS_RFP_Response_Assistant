@@ -1,4 +1,4 @@
-# RFP Match — A Confidence-Calibrated Retrieval Prototype (Ongoing)
+# RFP Match — A Confidence-Calibrated Retrieval Prototype
 
 **Live demo:** https://rfpresponseassistant.web.app/
 
@@ -22,8 +22,8 @@ It is not a full RFP management platform. It is a narrow, working test of one me
 2. The system embeds the question and compares it against a knowledge base of 30 pre-written PeopleOS answers using semantic similarity (cosine similarity over Gemini `text-embedding-004` vectors).
 3. The top 3 matches are returned, each with:
    - A similarity score
-   - A confidence tier: **Auto-Answer** (high confidence), **Review Required** (medium confidence), or **Escalate to SME** (low confidence)
-   - A staleness flag, calculated independently of the confidence score — a high-confidence match can still be flagged as outdated if it is past its review date
+   - A confidence tier: **Auto-Answer** (≥ 0.85), **Review Required** (0.60–0.84), or **Escalate to SME** (< 0.60)
+   - A staleness flag — calculated independently of the confidence score. A high-confidence match can still be flagged as outdated if it has passed its `review_due` date.
 
 ---
 
@@ -31,20 +31,77 @@ It is not a full RFP management platform. It is a narrow, working test of one me
 
 ```
 Browser (Firebase Hosting)
-        │
+        │  POST /match  {question: "..."}
         ▼
 FastAPI backend (Render)
         │
+        ├── APP_ENV controls CORS origin list and logging
         ├── Embeds incoming query via Gemini text-embedding-004
-        ├── Compares against 30 pre-embedded knowledge base entries (cosine similarity)
-        ├── Applies confidence tier logic
-        └── Applies staleness check (independent of confidence score)
-        │
-        ▼
-Top 3 ranked results returned to UI
+        ├── Compares against 30 pre-cached knowledge base embeddings (cosine similarity)
+        ├── Classifies result into confidence tier and decision label
+        ├── Applies staleness check (independent of similarity score)
+        └── Returns top 3 ranked matches as JSON
 ```
 
-**Stack:** Python, FastAPI, Google Gemini Embeddings API (`text-embedding-004`), NumPy, vanilla HTML/CSS/JS, Firebase Hosting, Render.
+**Stack:** Python 3, FastAPI, Uvicorn, Google Gemini Embeddings API (`text-embedding-004`), NumPy, vanilla HTML/CSS/JS, Firebase Hosting, Render.
+
+---
+
+## API Endpoints
+
+### `GET /health`
+
+Returns service status. Use this to verify a deploy succeeded before testing the match flow.
+
+```json
+{
+  "status": "ok",
+  "env": "production",
+  "embedder_ready": true
+}
+```
+
+`embedder_ready: false` means the backend started but failed to initialise the embedding engine — check the Render logs for the specific cause (missing API key, Gemini outage, malformed knowledge base).
+
+### `POST /match`
+
+**Request:**
+```json
+{ "question": "Does PeopleOS support Single Sign-On?" }
+```
+
+**Response:**
+```json
+{
+  "query": "Does PeopleOS support Single Sign-On?",
+  "results": [
+    {
+      "rank": 1,
+      "id": "KB004",
+      "category": "Security & Compliance",
+      "matched_question": "Does PeopleOS support Single Sign-On (SSO)?",
+      "answer": "Yes. PeopleOS supports SSO using SAML 2.0 and OAuth 2.0...",
+      "last_updated": "2025-08-03",
+      "review_due": "2026-02-01",
+      "owner": "Engineering",
+      "similarity_score": 0.90,
+      "confidence_tier": "High",
+      "decision_label": "Auto-Answer",
+      "decision_color": "green",
+      "is_stale": false
+    }
+  ]
+}
+```
+
+**Error responses:**
+
+| Status | Cause |
+|---|---|
+| `400` | Empty or whitespace-only question |
+| `503` | Embedding engine not initialised at startup, or Gemini API temporarily unavailable |
+| `502` | Permanent upstream Gemini API error |
+| `500` | Unexpected internal error |
 
 ---
 
@@ -62,7 +119,7 @@ The threshold was not set from intuition. It was calibrated against real data:
 
 **Why:** The cost of a false positive (a confidently wrong answer sent to an enterprise prospect with no human review) is categorically higher than the cost of a false negative (a correct answer requiring a few seconds of human confirmation). When those costs are asymmetric, the threshold should be set to protect against the worse outcome — not to maximize convenience.
 
-This was validated with a 50-case labeled evaluation suite (`backend/eval_set.json`, `backend/run_evals.py`) spanning true matches, adversarial false-positive risks, unrelated queries, multi-part compound questions, and negatively-framed questions. Result: **0% false positives landed in the Auto-Answer tier** across all 34 risk-category test cases.
+This was validated with a 50-case labeled evaluation suite (`backend/tests/eval_set.json`) spanning true matches, adversarial false-positive risks, unrelated queries, multi-part compound questions, and negatively-framed questions. Result: **0% false positives landed in the Auto-Answer tier** across all 34 risk-category test cases.
 
 Full reasoning, including the cases that did not go as expected and why they were not "fixed," is documented in [`/docs`](./docs).
 
@@ -74,9 +131,9 @@ This is a scoped POC, not a production system. Named limitations:
 
 - **No PDF intake.** Questions are typed or pasted as text. Real RFPs arrive as PDFs with inconsistent formatting — a separate, harder engineering problem.
 - **No feedback loop.** Accepted or rejected matches are not used to improve future retrieval. In production, this loop is what makes the system improve over time.
-- **No capture mechanism for informal commitments.** The knowledge base only reflects formally documented answers — not verbal commitments made on sales calls, which is the larger, harder problem this prototype's documentation explores in depth.
+- **No capture mechanism for informal commitments.** The knowledge base only reflects formally documented answers — not verbal commitments made on sales calls.
 - **No multi-tenant architecture.** Single fictional company, single knowledge base.
-- **No production-grade data security.** Uses entirely synthetic data by design. See `/docs` for what a production trust architecture would require.
+- **No production-grade data security.** Uses entirely synthetic data by design.
 - **Negation handling is weak.** Negatively-framed questions ("what do you NOT support?") are not reliably distinguished from their positive counterparts by similarity scoring alone — a confirmed, documented limitation of embedding-based retrieval, not a bug.
 
 ---
@@ -88,28 +145,35 @@ This is a scoped POC, not a production system. Named limitations:
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.template .env   # fill in GEMINI_API_KEY; APP_ENV defaults to "development"
+cp .env.template .env   # fill in GEMINI_API_KEY; set APP_ENV=development
 uvicorn main:app --reload
 ```
 
-The backend reads two environment variables:
+**Environment variables:**
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `GEMINI_API_KEY` | Yes | — | Get from [aistudio.google.com](https://aistudio.google.com) |
-| `APP_ENV` | No | `production` | `development` adds localhost CORS origins |
-| `FRONTEND_URL` | No | — | Extra CORS origin for staging deployments |
+| `APP_ENV` | No | `production` | Set to `development` locally to allow localhost CORS origins |
+| `FRONTEND_URL` | No | — | Extra allowed CORS origin for staging deployments |
+
+Verify it started correctly:
+
+```bash
+curl http://127.0.0.1:8000/health
+# {"status":"ok","env":"development","embedder_ready":true}
+```
 
 ### Frontend
 
 Switch `config.js` to the development profile before opening locally:
 
 ```powershell
-# Point frontend at local backend (http://127.0.0.1:8000)
+# Point the frontend at the local backend (http://127.0.0.1:8000)
 ./scripts/Set-FrontendApiUrl.ps1 -Env dev
 ```
 
-Then open `frontend/index.html` in a browser or serve it with VS Code Live Server.
+Then open `frontend/index.html` in a browser, or serve it with VS Code Live Server (port 5500).
 
 Switch back to production before deploying:
 
@@ -117,35 +181,74 @@ Switch back to production before deploying:
 ./scripts/Set-FrontendApiUrl.ps1 -Env prod
 ```
 
-### Deploying the full stack
+### Running the test and eval scripts
 
-**Backend (Render)**
+```bash
+# Smoke test against the deployed backend (default)
+py backend/tests/test_backend.py
+
+# Smoke test against local backend
+py backend/tests/test_backend.py --local
+
+# Full 50-case evaluation suite against deployed backend
+py backend/tests/run_evals.py
+
+# Full 50-case evaluation suite against local backend
+py backend/tests/run_evals.py --local
+
+# Similarity distribution test (runs embedder locally, no HTTP)
+py backend/tests/test_distribution.py
+
+# Adversarial / mismatched query test (runs embedder locally, no HTTP)
+py backend/tests/test_mismatched.py
+
+# Staleness logic test (no network, no API key needed)
+py backend/tests/test_staleness.py
+```
+
+`TEST_BASE_URL` env var also works as an alternative to `--local` for targeting any custom URL:
+```bash
+TEST_BASE_URL=https://staging-backend.onrender.com py backend/tests/run_evals.py
+```
+
+---
+
+## Deploying
+
+### Backend (Render)
+
+The backend is deployed at `https://peopleos-rfp-response-assistant.onrender.com` via `render.yaml`.
 
 1. Push changes to the connected git branch — Render auto-deploys on push.
 2. Confirm these environment variables are set in the Render dashboard:
-   - `GEMINI_API_KEY` — your Gemini API key (never commit this)
+   - `GEMINI_API_KEY` — your Gemini API key (never commit this value)
    - `APP_ENV` — set to `production` (already declared in `render.yaml`)
-3. Verify the deploy: `GET https://peopleos-rfp-response-assistant.onrender.com/health`
-   - Expected response: `{"status": "ok", "env": "production"}`
+3. Verify the deploy succeeded:
+   ```bash
+   curl https://peopleos-rfp-response-assistant.onrender.com/health
+   # {"status":"ok","env":"production","embedder_ready":true}
+   ```
+   If `embedder_ready` is `false`, check the Render service logs for the startup failure reason.
 
-**Frontend (Firebase)**
+> **Note on cold starts:** Render's free tier spins down inactive services. The first request after inactivity may take 30–60 seconds while the service wakes up and re-embeds the knowledge base. The frontend handles this with a 30-second timeout and a user-facing retry message.
+
+### Frontend (Firebase Hosting)
+
+The frontend is deployed at `https://rfpresponseassistant.web.app` via Firebase Hosting.
 
 ```powershell
-# Ensure config.js is on the production profile
+# 1. Ensure config.js points at the production backend
 ./scripts/Set-FrontendApiUrl.ps1 -Env prod
 
-# Deploy
+# 2. Deploy
 firebase deploy --only hosting
 ```
 
-Firebase will exclude `config.dev.js` and `config.prod.js` from the hosted build (configured in `firebase.json`). `config.js` is served with `no-cache` headers so changes take effect immediately after each deploy.
-
-### Running the eval suite
-
-```bash
-cd backend
-py tests/run_evals.py
-```
+**What the Firebase config does:**
+- Serves the `frontend/` directory
+- Excludes `config.dev.js` and `config.prod.js` from the hosted build
+- `index.html` and `config.js` are served with `no-cache` headers — changes are live immediately after each deploy
+- `app.js` and `style.css` are served with `immutable` cache headers — safe to cache permanently since Firebase fingerprints them on deploy
 
 ---
 
@@ -154,26 +257,34 @@ py tests/run_evals.py
 ```
 rfp-match-poc/
 ├── backend/
-│   ├── main.py              # FastAPI app, /match and /health endpoints
-│   ├── embedder.py          # Embedding, cosine similarity, confidence + staleness logic
-│   ├── knowledge_base.json  # 30 Q&A pairs across 6 categories
-│   ├── .env.template        # Copy to .env and fill in values — never commit .env
+│   ├── main.py                  # FastAPI app — /health and /match endpoints, CORS, env config
+│   ├── embedder.py              # Embedding engine — Gemini calls, cosine similarity,
+│   │                            #   confidence tiering, staleness logic, error handling
+│   ├── knowledge_base.json      # 30 Q&A pairs across 6 categories
+│   ├── update_kb_dates.py       # Maintenance script — refreshes review_due dates
+│   ├── .env.template            # Copy to .env and fill in values — never commit .env
 │   ├── requirements.txt
 │   └── tests/
-│       ├── eval_set.json    # 50 labeled test cases
-│       └── run_evals.py     # Automated evaluation scorecard
+│       ├── config.py            # Shared URL resolver — --local flag / TEST_BASE_URL env var
+│       ├── test_backend.py      # HTTP smoke test — /health + 5 sample /match queries
+│       ├── test_distribution.py # Similarity score distribution across 15 true-match queries
+│       ├── test_mismatched.py   # Adversarial / unrelated query distribution test
+│       ├── test_staleness.py    # Staleness logic verification (no network required)
+│       ├── run_evals.py         # 50-case labeled evaluation scorecard
+│       └── eval_set.json        # Labeled evaluation dataset
 ├── frontend/
-│   ├── index.html
-│   ├── config.js            # Active config (production by default) — loaded by index.html
-│   ├── config.dev.js        # Development profile (local backend)
-│   ├── config.prod.js       # Production profile (Render backend)
-│   ├── style.css
-│   └── app.js
+│   ├── index.html               # Single-page UI
+│   ├── config.js                # Active API config — loaded by index.html (production default)
+│   ├── config.dev.js            # Development profile — local backend (not deployed)
+│   ├── config.prod.js           # Production profile — Render backend (reference copy)
+│   ├── style.css                # All styling and responsive layout
+│   └── app.js                   # Fetch logic, error handling, result rendering
 ├── scripts/
-│   └── Set-FrontendApiUrl.ps1  # Switch config.js between dev/prod profiles
-├── render.yaml              # Render deployment blueprint (backend)
-├── firebase.json            # Firebase Hosting config (frontend)
-└── docs/                    # PM documentation — problem framing, decisions, gap analysis
+│   └── Set-FrontendApiUrl.ps1   # Switch config.js: -Env dev | -Env prod | -ApiUrl <url>
+├── render.yaml                  # Render deployment blueprint — build/start commands, env vars
+├── firebase.json                # Firebase Hosting config — cache headers, ignore rules, rewrite
+├── .firebaserc                  # Firebase project mapping
+└── docs/                        # PM documentation — problem framing, decisions, gap analysis
 ```
 
 ---
@@ -182,7 +293,7 @@ rfp-match-poc/
 
 The `/docs` folder contains the PM thinking behind this build: problem framing, competitive landscape, user persona, the full confidence threshold calibration story (including the failures), and an honest gap analysis of what a production version would require.
 
-This documentation was written iteratively, alongside the build, rather than after — including the decisions that did not go as planned and were kept rather than hidden.
+This documentation was written iteratively alongside the build — including decisions that did not go as planned and were kept rather than hidden.
 
 ---
 
